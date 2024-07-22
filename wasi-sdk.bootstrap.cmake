@@ -99,11 +99,15 @@ function(wasi_sdk_bootstrap)
     WORKING_DIRECTORY ${wasi_sdk_root}
   )
 
+  # Move compiler-rt to expected lib/wasi directory
+  file(MAKE_DIRECTORY "${wasi_sdk_root}/lib/wasi")
+  file(RENAME "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" "${wasi_sdk_root}/lib/wasi/libclang_rt.builtins-wasm32.a")
+
   # Retrieve clang resource directory
   execute_process(COMMAND clang --print-resource-dir OUTPUT_VARIABLE CLANG_DEFAULT_RESOURCE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   set(${arg_WASI_SYSROOT_OUTPUT}
-      "${wasi_sdk_root}/wasi-sysroot"
+      "${wasi_sdk_root}/wasi-sysroot-${wasi_sdk_version}"
       PARENT_SCOPE
   )
 
