@@ -18,7 +18,7 @@ FetchContent_Declare(
   wasi_sdk_toolchain
   SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/wasi-sdk"
   GIT_REPOSITORY https://github.com/rioam2/wasi-sdk-toolchain.git
-  GIT_TAG wasi-sdk-21
+  GIT_TAG wasi-sdk-23
 )
 FetchContent_MakeAvailable(wasi_sdk_toolchain)
 set(FETCHCONTENT_FULLY_DISCONNECTED ${FETCHCONTENT_FULLY_DISCONNECTED_OLD})
@@ -28,7 +28,7 @@ include("${wasi_sdk_toolchain_SOURCE_DIR}/wasi-sdk.toolchain.cmake")
 
 `FETCHCONTENT_FULLY_DISCONNECTED` is forced to off to ensure that the toolchain is always fetched and loaded, regardless of your project's configuration. It is set back to it's original value after the toolchain is loaded.
 
-The tag in this example is set to `wasi-sdk-21`. This is configurable and can be set to any tag within this repository.
+The tag in this example is set to `wasi-sdk-23`. This is configurable and can be set to any tag within this repository.
 
 Finally, set this CMake cache variable:
 
