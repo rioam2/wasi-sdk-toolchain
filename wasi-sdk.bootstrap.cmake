@@ -99,9 +99,13 @@ function(wasi_sdk_bootstrap)
     WORKING_DIRECTORY ${wasi_sdk_root}
   )
 
-  # Move compiler-rt to expected lib/wasi directory
+  # Move compiler-rt to lib folder for each triplet
   file(MAKE_DIRECTORY "${wasi_sdk_root}/lib/wasi")
-  file(RENAME "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" "${wasi_sdk_root}/lib/wasi/libclang_rt.builtins-wasm32.a")
+  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasi")
+  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasi-threads")
+  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasip1")
+  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasip1-threads")
+  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasip2")
 
   # Retrieve clang resource directory
   execute_process(COMMAND clang --print-resource-dir OUTPUT_VARIABLE CLANG_DEFAULT_RESOURCE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)

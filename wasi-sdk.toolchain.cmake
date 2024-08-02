@@ -33,7 +33,7 @@ wasi_sdk_bootstrap(
 set(CMAKE_SYSTEM_NAME WASI)
 set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR wasm32)
-set(triple wasm32-wasi)
+set(triple wasm32-wasip1-threads)
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
