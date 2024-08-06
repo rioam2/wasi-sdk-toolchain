@@ -38,3 +38,21 @@ Finally, set this CMake cache variable:
 ### Method 2: Cloning the toolchain directly
 
 Clone this repo directly into a directory of your choosing, then set `CMAKE_TOOLCHAIN_FILE` to point to `wasi-sdk.toolchain.cmake`.
+
+## Using wit-bindgen to create a component
+
+The toolchain provides a helper function to generate WebAssembly Interface Type bindings (WIT-bindings) using wit-bindgen
+
+```cmake
+wit_bindgen(
+    INTERFACE_FILE_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/module.wit"
+    BINDINGS_DIR_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/bindings"
+    GENERATED_FILES_OUTPUT wit_codegen_output_files
+)
+
+# ...
+
+add_executable(<target> ${wit_codegen_output_files} ...)
+```
+
+This generates WIT bindings for the `.wit` file provided by `INTERFACE_FILE_INPUT`. The resulting bindings will be placed in the `BINDINGS_DIR_INPUT` directory. Additionally, a list of the generated files will be placed in a list variable given by `GENERATED_FILES_OUTPUT`. This list can be provided to a later call to `add_executable` as sources/headers to link with your executable.
