@@ -66,7 +66,7 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -resource-dir=${WASI_RESOURCE_DIR} --includ
 # Project compiler flags
 add_compile_options(
   -stdlib=libc++
-  -fno-exceptions
+  -fwasm-exceptions
   -D_WASI_EMULATED_SIGNAL
   -D_WASI_EMULATED_PROCESS_CLOCKS
   -D_WASI_EMULATED_MMAN
