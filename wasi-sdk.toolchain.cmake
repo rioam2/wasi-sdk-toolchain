@@ -24,6 +24,19 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 
 # Add wit-bindgen utilities
 include(${CMAKE_CURRENT_LIST_DIR}/wit-bindgen.bootstrap.cmake)
+wit_bindgen_bootstrap(
+  WIT_BINDGEN_TAG "v0.29.0"
+  WIT_BINDGEN_BINARY_OUTPUT "_wit_bindgen_binary"
+)
+
+# Add wasm-tools utilities
+include(${CMAKE_CURRENT_LIST_DIR}/wasm-tools.bootstrap.cmake)
+wasm_tools_bootstrap(
+  WASMTIME_POLYFILL_TAG "v23.0.1"
+  WASMTIME_POLYFILL_DIR_OUTPUT "_wasm_tools_polyfill_dir"
+  WASM_TOOLS_TAG "v1.215.0"
+  WASM_TOOLS_BINARY_OUTPUT "_wasm_tools_binary"
+)
 
 include(${CMAKE_CURRENT_LIST_DIR}/wasi-sdk.bootstrap.cmake)
 wasi_sdk_bootstrap(
