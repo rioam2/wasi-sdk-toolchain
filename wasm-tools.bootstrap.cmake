@@ -162,7 +162,7 @@ function(wasm_create_component)
     cmake_parse_arguments(
         PARSE_ARGV 0 "arg"
         ""
-        "CORE_WASM_TARGET;COMPONENT_TYPE"
+        "COMPONENT_TARGET;CORE_WASM_TARGET;COMPONENT_TYPE"
         ""
     )
     if (DEFINED arg_UNPARSED_ARGUMENTS)
@@ -200,10 +200,10 @@ function(wasm_create_component)
 
     # Add a custom target that depends on the zip file
     add_custom_target(
-        "${arg_CORE_WASM_TARGET}_component" ALL
+        "${arg_COMPONENT_TARGET}" ALL
         DEPENDS "${component_output_file}"
     )
 
     # Ensure the component target is built after the executable
-    add_dependencies("${arg_CORE_WASM_TARGET}_component" ${arg_CORE_WASM_TARGET})
+    add_dependencies(${arg_COMPONENT_TARGET} ${arg_CORE_WASM_TARGET})
 endfunction()
