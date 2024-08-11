@@ -73,8 +73,8 @@ set(LIBCXX_USE_COMPILER_RT "YES")
 set(LIBCXXABI_USE_COMPILER_RT "YES")
 
 # Global compiler flags - all targets should use compiler-rt builtins from wasi-sdk
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -resource-dir=${WASI_RESOURCE_DIR} --include-directory-after ${CLANG_DEFAULT_RESOURCE_DIR}/include")
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -resource-dir=${WASI_RESOURCE_DIR} --include-directory-after ${CLANG_DEFAULT_RESOURCE_DIR}/include")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include'")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include'")
 
 # Project compiler flags
 add_compile_options(
