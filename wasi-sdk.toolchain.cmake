@@ -83,7 +83,7 @@ add_link_options($<$<CONFIG:Release>:-Wl,--strip-debug,--lto-O2,--lto-CGO3,-O3>)
 # Project compiler flags
 add_compile_options(
   -stdlib=libc++
-  -fignore-exceptions
+  -fno-exceptions
   -D_WASI_EMULATED_SIGNAL
   -D_WASI_EMULATED_PROCESS_CLOCKS
   -D_WASI_EMULATED_MMAN
