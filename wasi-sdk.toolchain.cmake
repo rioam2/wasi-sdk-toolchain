@@ -76,10 +76,14 @@ set(LIBCXXABI_USE_COMPILER_RT "YES")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include'")
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include'")
 
+# Release-specific compiler and linker flags because CMake does not automatically include them
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+add_link_options($<$<CONFIG:Release>:-Wl,--strip-debug,--lto-O2,--lto-CGO3,-O3>)
+
 # Project compiler flags
 add_compile_options(
   -stdlib=libc++
-  -fignore-exceptions
+  -fno-exceptions
   -D_WASI_EMULATED_SIGNAL
   -D_WASI_EMULATED_PROCESS_CLOCKS
   -D_WASI_EMULATED_MMAN
