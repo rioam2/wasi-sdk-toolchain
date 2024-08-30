@@ -98,6 +98,10 @@ add_link_options(
   -lwasi-emulated-getpid
 )
 
+# Interface library to enable stubbing exceptions so that they abort upon throw
+add_library(wasi_sdk_stub_exceptions INTERFACE)
+target_compile_options(wasi_sdk_stub_exceptions INTERFACE -include "${CMAKE_CURRENT_LIST_DIR}/include/wasi_abort_exceptions")
+
 # Interface library to enable reactor model WebAssembly files
 add_library(wasi_sdk_reactor_module INTERFACE)
 target_link_options(wasi_sdk_reactor_module INTERFACE -nostartfiles -Wl,--no-entry)
