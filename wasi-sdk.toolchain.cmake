@@ -104,4 +104,4 @@ target_compile_options(wasi_sdk_stub_exceptions INTERFACE -include "${CMAKE_CURR
 
 # Interface library to enable reactor model WebAssembly files
 add_library(wasi_sdk_reactor_module INTERFACE)
-target_link_options(wasi_sdk_reactor_module INTERFACE -nostartfiles -Wl,--no-entry)
+target_link_options(wasi_sdk_reactor_module INTERFACE -nostartfiles -Wl,--no-entry -include "${CMAKE_CURRENT_LIST_DIR}/include/wasi_reactor_module.h")
