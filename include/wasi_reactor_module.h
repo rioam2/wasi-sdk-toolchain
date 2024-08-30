@@ -1,0 +1,14 @@
+#pragma once
+
+// This is the WASM lib's initialization entrypoint. It should be called
+// before running any other exported function because it initializes implicit
+// global/static resources. This is only required in library/reactor mode of
+// WebAssembly. Read more here:
+// https://stackoverflow.com/a/76492425/24430998
+// https://wasmcloud.com/blog/webassembly-patterns-command-reactor-library#the-reactor-pattern
+extern "C" __attribute__((export_name("__wasm_call_ctors"))) void
+__wasm_call_ctors();
+
+extern "C" __attribute__((export_name("_start"))) void _start() {
+  __wasm_call_ctors();
+}
