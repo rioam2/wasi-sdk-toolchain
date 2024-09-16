@@ -76,8 +76,8 @@ set(LIBCXX_USE_COMPILER_RT "YES")
 set(LIBCXXABI_USE_COMPILER_RT "YES")
 
 # Global compiler flags - all targets should use compiler-rt builtins from wasi-sdk
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include' --include-directory-after='${CMAKE_CURRENT_LIST_DIR}/include'")
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include'")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'")
 
 # Release-specific compiler and linker flags because CMake does not automatically include them
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
@@ -108,3 +108,6 @@ target_compile_options(wasi_sdk_stub_exceptions INTERFACE -include "${CMAKE_CURR
 # Interface library to enable reactor model WebAssembly files
 add_library(wasi_sdk_reactor_module INTERFACE)
 target_link_options(wasi_sdk_reactor_module INTERFACE -nostartfiles -Wl,--no-entry)
+
+add_library(wasi_sdk_stub_libc_unimplmented INTERFACE)
+target_compile_options(wasi_sdk_stub_libc_unimplmented INTERFACE -include "${CMAKE_CURRENT_LIST_DIR}/libc-stubs/stubs.c")
