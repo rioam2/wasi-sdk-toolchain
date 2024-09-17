@@ -166,6 +166,18 @@ struct sigevent {
 #define SIGEV_THREAD 2
 #define SIGEV_THREAD_ID 4
 
+typedef struct sigaltstack {
+  void* ss_sp;
+  size_t ss_size;
+  int ss_flags;
+} stack_t;
+
+int sigaltstack(const stack_t* __restrict, stack_t* __restrict);
+int sigaction(int, const struct sigaction *__restrict, struct sigaction *__restrict);
+
+#define SIGSTKSZ 0x00
+#define SA_ONSTACK 0x00
+
 #ifdef __cplusplus
 }
 #endif
