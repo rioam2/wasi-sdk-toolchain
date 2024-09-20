@@ -1,0 +1,7 @@
+// Include all stubbed libc implementations
+
+#include "../libc-stubs/setjmp.c"
+#include "../libc-stubs/signal.c"
+#include "../libc-stubs/sys/file.c"
+#include "../libc-stubs/time.c"
+#include "../libc-stubs/unistd.c"
