@@ -17,7 +17,7 @@ function(wasi_sdk_bootstrap)
   cmake_parse_arguments(
     PARSE_ARGV 0 "arg"
     ""
-    "TAG;WASI_SYSROOT_OUTPUT;WASI_RESOURCE_DIR_OUTPUT;CLANG_DEFAULT_RESOURCE_DIR_OUTPUT"
+    "TAG;WASI_SYSROOT_OUTPUT;WASI_SDK_BIN_OUTPUT"
     ""
   )
   if (DEFINED arg_UNPARSED_ARGUMENTS)
@@ -46,82 +46,54 @@ function(wasi_sdk_bootstrap)
     message(STATUS "Cache directory for wasi-sdk exists already: ${wasi_sdk_root}")
   endif()
 
+  # Detect host identifier
+  set(host_os "${CMAKE_HOST_SYSTEM_NAME}")
+  string(TOLOWER "${host_os}" host_os)
+  if ("${host_os}" STREQUAL "darwin")
+      set(host_os "macos")
+  endif()
+  set(host_architecture "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+  string(TOLOWER "${host_architecture}" host_architecture)
+  set(host_identifier "${host_architecture}-${host_os}")
+
   # Define wasi-sdk dependencies, paths and download locations
-  set(wasi_sdk_sysroot_tarball_name "wasi-sysroot-${wasi_sdk_version}.tar.gz")
+  set(wasi_sdk_tarball_name "wasi-sdk-${wasi_sdk_version}-${host_identifier}.tar.gz")
   set(wasi_sdk_libclang_tarball_name "libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}.tar.gz")
-  set(wasi_sdk_sysroot_tarball_path "${wasi_sdk_root}/${wasi_sdk_sysroot_tarball_name}")
+  set(wasi_sdk_tarball_path "${wasi_sdk_root}/${wasi_sdk_tarball_name}")
   set(wasi_sdk_libclang_tarball_path "${wasi_sdk_root}/${wasi_sdk_libclang_tarball_name}")
   set(wasi_sdk_release_base_url "https://github.com/WebAssembly/wasi-sdk/releases/download/${arg_TAG}")
-  set(wasi_sdk_sysroot_tarball_url "${wasi_sdk_release_base_url}/${wasi_sdk_sysroot_tarball_name}")
+  set(wasi_sdk_tarball_url "${wasi_sdk_release_base_url}/${wasi_sdk_tarball_name}")
   set(wasi_sdk_libclang_tarball_url "${wasi_sdk_release_base_url}/${wasi_sdk_libclang_tarball_name}")
 
-  # Download wasi-sdk sysroot
-  if (NOT EXISTS ${wasi_sdk_sysroot_tarball_path})
-    message(STATUS "Downloading wasi-sdk sysroot from ${wasi_sdk_sysroot_tarball_url}")
-    file(DOWNLOAD ${wasi_sdk_sysroot_tarball_url} ${wasi_sdk_sysroot_tarball_path} STATUS wasi_sdk_sysroot_dl_status)
-    list(GET wasi_sdk_sysroot_dl_status 0 wasi_sdk_sysroot_dl_failed)
-    if (wasi_sdk_sysroot_dl_failed)
-      file(REMOVE ${wasi_sdk_sysroot_tarball_path})
-      message(FATAL_ERROR "Download for wasi-sdk sysroot failed.")
+  # Download wasi-sdk toolchain
+  if (NOT EXISTS ${wasi_sdk_tarball_path})
+    message(STATUS "Downloading wasi-sdk toolchain from ${wasi_sdk_tarball_url}")
+    file(DOWNLOAD ${wasi_sdk_tarball_url} ${wasi_sdk_tarball_path} STATUS wasi_sdk_dl_status)
+    list(GET wasi_sdk_dl_status 0 wasi_sdk_dl_failed)
+    if (wasi_sdk_dl_failed)
+      file(REMOVE ${wasi_sdk_tarball_path})
+      message(FATAL_ERROR "Download for wasi-sdk toolchain failed. ${wasi_sdk_dl_status}")
     else()
-      message(STATUS "Successfully downloaded wasi-sdk sysroot to ${wasi_sdk_sysroot_tarball_path}")
+      message(STATUS "Successfully downloaded wasi-sdk toolchain to ${wasi_sdk_tarball_path}")
     endif()
   else()
-    message(STATUS "wasi-sdk sysroot has already been downloaded and cached.")
+    message(STATUS "wasi-sdk toolchain has already been downloaded and cached.")
   endif()
 
-  # Download wasi-sdk libclang runtime builtins
-  if (NOT EXISTS ${wasi_sdk_libclang_tarball_path})
-    message(STATUS "Downloading wasi-sdk libclang runtime builtins from ${wasi_sdk_libclang_tarball_url}")
-    file(DOWNLOAD ${wasi_sdk_libclang_tarball_url} ${wasi_sdk_libclang_tarball_path} STATUS wasi_sdk_libclang_dl_status)
-    list(GET wasi_sdk_libclang_dl_status 0 wasi_sdk_libclang_dl_failed)
-    if (wasi_sdk_libclang_dl_failed)
-      file(REMOVE ${wasi_sdk_libclang_tarball_path})
-      message(FATAL_ERROR "Download for wasi-sdk libclang runtime builtins failed.")
-    else()
-      message(STATUS "Successfully downloaded wasi-sdk libclang runtime builtins to ${wasi_sdk_libclang_tarball_path}")
-    endif()
-  else()
-    message(STATUS "wasi-sdk libclang runtime builtins have already been downloaded and cached.")
-  endif()
-
-  # Extract wasi-sdk sysroot to cache directory
-  message(STATUS "Extracting wasi-sdk sysroot to ${wasi_sdk_root}")
+  # Extract wasi-sdk toolchain to cache directory
+  message(STATUS "Extracting wasi-sdk toolchain to ${wasi_sdk_root}")
   execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasi_sdk_sysroot_tarball_path}
+    COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasi_sdk_tarball_path}
     WORKING_DIRECTORY ${wasi_sdk_root}
   )
-
-  # Extract wasi-sdk libclang runtime builtins to cache directory
-  message(STATUS "Extracting wasi-sdk libclang runtime builtins to ${wasi_sdk_root}")
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasi_sdk_libclang_tarball_path}
-    WORKING_DIRECTORY ${wasi_sdk_root}
-  )
-
-  # Move compiler-rt to lib folder for each triplet
-  file(MAKE_DIRECTORY "${wasi_sdk_root}/lib/wasi")
-  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasi")
-  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasi-threads")
-  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasip1")
-  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasip1-threads")
-  file(COPY "${wasi_sdk_root}/libclang_rt.builtins-wasm32-wasi-${wasi_sdk_version}/libclang_rt.builtins-wasm32.a" DESTINATION "${wasi_sdk_root}/lib/wasip2")
-
-  # Retrieve clang resource directory
-  execute_process(COMMAND clang --print-resource-dir OUTPUT_VARIABLE CLANG_DEFAULT_RESOURCE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   set(${arg_WASI_SYSROOT_OUTPUT}
-      "${wasi_sdk_root}/wasi-sysroot-${wasi_sdk_version}"
+      "${wasi_sdk_root}/wasi-sdk-${wasi_sdk_version}-${host_identifier}/share/wasi-sysroot"
       PARENT_SCOPE
   )
 
-  set(${arg_WASI_RESOURCE_DIR_OUTPUT}
-      "${wasi_sdk_root}"
-      PARENT_SCOPE
-  )
-
-  set(${arg_CLANG_DEFAULT_RESOURCE_DIR_OUTPUT}
-      "${CLANG_DEFAULT_RESOURCE_DIR}"
+  set(${arg_WASI_SDK_BIN_OUTPUT}
+      "${wasi_sdk_root}/wasi-sdk-${wasi_sdk_version}-${host_identifier}/bin"
       PARENT_SCOPE
   )
 endfunction()
