@@ -45,8 +45,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/wasi-sdk.bootstrap.cmake)
 wasi_sdk_bootstrap(
   TAG wasi-sdk-23
   WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
-  WASI_RESOURCE_DIR_OUTPUT WASI_RESOURCE_DIR
-  CLANG_DEFAULT_RESOURCE_DIR_OUTPUT CLANG_DEFAULT_RESOURCE_DIR
+  WASI_SDK_BIN_OUTPUT WASI_SDK_BIN
 )
 
 set(CMAKE_SYSTEM_NAME WASI)
@@ -54,11 +53,12 @@ set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR wasm32)
 set(triple wasm32-wasip1-threads)
 
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_ASM_COMPILER clang)
-set(CMAKE_AR llvm-ar)
-set(CMAKE_RANLIB llvm-ranlib)
+set(CMAKE_C_COMPILER "${WASI_SDK_BIN}/clang")
+set(CMAKE_CXX_COMPILER "${WASI_SDK_BIN}/clang++")
+set(CMAKE_ASM_COMPILER "${WASI_SDK_BIN}/clang")
+set(CMAKE_AR "${WASI_SDK_BIN}/llvm-ar")
+set(CMAKE_RANLIB "${WASI_SDK_BIN}/llvm-ranlib")
+set(CMAKE_LINKER "${WASI_SDK_BIN}/wasm-ld")
 set(CMAKE_C_COMPILER_TARGET ${triple})
 set(CMAKE_CXX_COMPILER_TARGET ${triple})
 set(CMAKE_ASM_COMPILER_TARGET ${triple})
@@ -76,8 +76,8 @@ set(LIBCXX_USE_COMPILER_RT "YES")
 set(LIBCXXABI_USE_COMPILER_RT "YES")
 
 # Global compiler flags - all targets should use compiler-rt builtins from wasi-sdk
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'")
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -resource-dir='${WASI_RESOURCE_DIR}' --include-directory-after='${CLANG_DEFAULT_RESOURCE_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'")
 
 # Release-specific compiler and linker flags because CMake does not automatically include them
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
