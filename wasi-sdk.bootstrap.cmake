@@ -54,6 +54,9 @@ function(wasi_sdk_bootstrap)
   endif()
   set(host_architecture "${CMAKE_HOST_SYSTEM_PROCESSOR}")
   string(TOLOWER "${host_architecture}" host_architecture)
+  if ("{${host_architecture}" STREQUAL "aarch64")
+    set(host_architecture "arm64")
+  endif()
   set(host_identifier "${host_architecture}-${host_os}")
 
   # Define wasi-sdk dependencies, paths and download locations
