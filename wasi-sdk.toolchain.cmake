@@ -10,17 +10,6 @@ endif()
 
 unset(IN_TRY_COMPILE)
 
-# Check clang version
-set(REQUIRED_CLANG_VERSION "17.0.0")
-execute_process(COMMAND clang --version OUTPUT_VARIABLE CLANG_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
-if(NOT "${CLANG_VERSION}" MATCHES "[0-9]+.[0-9]+.[0-9]+")
-  message(FATAL_ERROR "Could not determine version from `clang --version` output: ${CLANG_VERSION}")
-endif()
-set(CLANG_VERSION "${CMAKE_MATCH_0}")
-if (CLANG_VERSION VERSION_LESS REQUIRED_CLANG_VERSION)
-  message(FATAL_ERROR "Clang must be version ${REQUIRED_CLANG_VERSION} or greater to compile for wasm32-wasi. Current Clang version: ${CLANG_VERSION}")
-endif()
-
 # Until Platform/WASI.cmake is upstream we need to inject the path to it
 # into CMAKE_MODULE_PATH.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
