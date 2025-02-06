@@ -1,6 +1,9 @@
 include_guard(GLOBAL)
 cmake_minimum_required(VERSION 3.25)
 
+# Keep track of whether the toolchain has been initialized
+set(WASI_TOOLCHAIN_INITIALIZED OFF)
+
 # Function to initialize the toolchain given specific versions of the supporting tools
 function(initialize_wasi_toolchain)
     # Parse arguments to the function
@@ -17,9 +20,9 @@ function(initialize_wasi_toolchain)
         )
     endif()
 
-    # Guard against being called from within a try_compile
+    # Guard against being called from within a try_compile or if the toolchain has already been initialized
     get_property(IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
-    if (IN_TRY_COMPILE)
+    if (IN_TRY_COMPILE OR WASI_TOOLCHAIN_INITIALIZED)
       return()
     endif()
     unset(IN_TRY_COMPILE)
@@ -118,5 +121,8 @@ function(initialize_wasi_toolchain)
     
     add_library(wasi_sdk_stub_libc_unimplmented INTERFACE)
     target_compile_options(wasi_sdk_stub_libc_unimplmented INTERFACE -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include/wasi_stub_libc_unimplmented")
+
+    # Set the toolchain as initialized
+    set(WASI_TOOLCHAIN_INITIALIZED ON PARENT_SCOPE)
 
 endfunction()
