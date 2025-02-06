@@ -1,14 +1,5 @@
 include_guard(GLOBAL)
-
 cmake_minimum_required(VERSION 3.25)
-
-get_property(IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
-
-if (IN_TRY_COMPILE)
-  return()
-endif()
-
-unset(IN_TRY_COMPILE)
 
 # Function to initialize the toolchain given specific versions of the supporting tools
 function(initialize_wasi_toolchain)
@@ -26,20 +17,28 @@ function(initialize_wasi_toolchain)
         )
     endif()
 
+    # Guard against being called from within a try_compile
+    get_property(IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
+    if (IN_TRY_COMPILE)
+      return()
+    endif()
+    unset(IN_TRY_COMPILE)
+
     # Until Platform/WASI.cmake is upstream we need to inject the path to it
     # into CMAKE_MODULE_PATH.
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}")
     set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" PARENT_SCOPE)
     
     # Add wit-bindgen utilities
-    include(${CMAKE_CURRENT_LIST_DIR}/wit-bindgen.bootstrap.cmake)
+    message(STATUS "Initializing WASI toolchain ${CMAKE_CURRENT_FUNCTION_LIST_DIR}")
+    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wit-bindgen.bootstrap.cmake)
     wit_bindgen_bootstrap(
       WIT_BINDGEN_TAG "${arg_WIT_BINDGEN_TAG}"
       WIT_BINDGEN_BINARY_OUTPUT "_wit_bindgen_binary"
     )
     
     # Add wasm-tools utilities
-    include(${CMAKE_CURRENT_LIST_DIR}/wasm-tools.bootstrap.cmake)
+    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasm-tools.bootstrap.cmake)
     wasm_tools_bootstrap(
       WASMTIME_POLYFILL_TAG "${arg_WASMTIME_TAG}"
       WASMTIME_POLYFILL_DIR_OUTPUT "_wasm_tools_polyfill_dir"
@@ -47,7 +46,7 @@ function(initialize_wasi_toolchain)
       WASM_TOOLS_BINARY_OUTPUT "_wasm_tools_binary"
     )
     
-    include(${CMAKE_CURRENT_LIST_DIR}/wasi-sdk.bootstrap.cmake)
+    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
     wasi_sdk_bootstrap(
       TAG wasi-sdk-23
       WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
@@ -84,8 +83,8 @@ function(initialize_wasi_toolchain)
     set(LIBCXXABI_USE_COMPILER_RT "YES" PARENT_SCOPE)
     
     # Global compiler flags - all targets should use compiler-rt builtins from wasi-sdk
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'" PARENT_SCOPE)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_LIST_DIR}/include' -I'${CMAKE_CURRENT_LIST_DIR}/libc-stubs'" PARENT_SCOPE)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs'" PARENT_SCOPE)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs'" PARENT_SCOPE)
     
     # Release-specific compiler and linker flags because CMake does not automatically include them
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" PARENT_SCOPE)
@@ -111,14 +110,13 @@ function(initialize_wasi_toolchain)
     
     # Interface library to enable stubbing exceptions so that they abort upon throw
     add_library(wasi_sdk_stub_exceptions INTERFACE)
-    target_compile_options(wasi_sdk_stub_exceptions INTERFACE -include "${CMAKE_CURRENT_LIST_DIR}/include/wasi_abort_exceptions")
+    target_compile_options(wasi_sdk_stub_exceptions INTERFACE -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include/wasi_abort_exceptions")
     
     # Interface library to enable reactor model WebAssembly files
     add_library(wasi_sdk_reactor_module INTERFACE)
     target_link_options(wasi_sdk_reactor_module INTERFACE -nostartfiles -Wl,--no-entry)
     
     add_library(wasi_sdk_stub_libc_unimplmented INTERFACE)
-    target_compile_options(wasi_sdk_stub_libc_unimplmented INTERFACE -include "${CMAKE_CURRENT_LIST_DIR}/include/wasi_stub_libc_unimplmented")
+    target_compile_options(wasi_sdk_stub_libc_unimplmented INTERFACE -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include/wasi_stub_libc_unimplmented")
 
 endfunction()
-
