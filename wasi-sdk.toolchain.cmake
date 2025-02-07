@@ -39,6 +39,7 @@ function(initialize_wasi_toolchain)
       WIT_BINDGEN_TAG "${arg_WIT_BINDGEN_TAG}"
       WIT_BINDGEN_BINARY_OUTPUT "_wit_bindgen_binary"
     )
+    set(_wit_bindgen_binary "${_wit_bindgen_binary}" PARENT_SCOPE)
     
     # Add wasm-tools utilities
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasm-tools.bootstrap.cmake)
@@ -48,6 +49,8 @@ function(initialize_wasi_toolchain)
       WASM_TOOLS_TAG "${arg_WASM_TOOLS_TAG}"
       WASM_TOOLS_BINARY_OUTPUT "_wasm_tools_binary"
     )
+    set(_wasm_tools_binary "${_wasm_tools_binary}" PARENT_SCOPE)
+    set(_wasm_tools_polyfill_dir "${_wasm_tools_polyfill_dir}" PARENT_SCOPE)
     
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
     wasi_sdk_bootstrap(

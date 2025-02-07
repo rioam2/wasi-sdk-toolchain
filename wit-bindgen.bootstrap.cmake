@@ -130,7 +130,7 @@ function(wit_bindgen)
         OUTPUT_VARIABLE wit_codegen_output
     )
     if (NOT wit_codegen_result EQUAL 0)
-        message(FATAL_ERROR "WebAssembly Component Interface (WIT) bindings failed to generate. \n${wit_codegen_output}")
+        message(FATAL_ERROR "WebAssembly Component Interface (WIT) bindings failed to generate. \n${wit_codegen_output} \n${wit_codegen_result}")
     endif()
 
     # Scrape generated files from wit-bindgen
