@@ -1,0 +1,128 @@
+#pragma once
+
+#if __has_include_next(<mutex>)
+#include_next <mutex>
+#endif
+
+// Stub basic mutex types if the standard library doesn't provide them.
+#ifdef _LIBCPP_HAS_NO_THREADS
+
+#include_next <tuple>
+#include_next <utility>
+
+namespace std {
+
+struct defer_lock_t {
+  explicit constexpr defer_lock_t() = default;
+};
+
+struct adopt_lock_t {
+  explicit constexpr adopt_lock_t() = default;
+};
+
+struct try_to_lock_t {
+  explicit constexpr try_to_lock_t() = default;
+};
+
+template <class... Mutexes>
+class scoped_lock {
+ public:
+  explicit scoped_lock(Mutexes&... mutexes) : mutexes_(mutexes...) {
+    std::apply([](auto&... m) { (m.lock(), ...); }, mutexes_);
+  }
+  ~scoped_lock() noexcept { unlock(); }
+  scoped_lock(const scoped_lock&) = delete;
+  scoped_lock& operator=(const scoped_lock&) = delete;
+
+ private:
+  std::tuple<Mutexes&...> mutexes_;
+  void unlock() noexcept {
+    std::apply([](auto&... m) { (m.unlock(), ...); }, mutexes_);
+  }
+};
+
+template <class... Mutexes>
+using lock_guard = scoped_lock<Mutexes...>;
+
+template <typename Mutex>
+class unique_lock {
+ public:
+  using mutex_type = Mutex;
+
+  unique_lock() noexcept : m(nullptr), owns(false) {}
+  explicit unique_lock(mutex_type& mtx) : m(&mtx), owns(false) {
+    m->lock();
+    owns = true;
+  }
+  unique_lock(mutex_type& mtx, std::defer_lock_t) noexcept
+      : m(&mtx), owns(false) {}
+  unique_lock(mutex_type& mtx, std::try_to_lock_t)
+      : m(&mtx), owns(m->try_lock()) {}
+  unique_lock(mutex_type& mtx, std::adopt_lock_t) noexcept
+      : m(&mtx), owns(true) {}
+  unique_lock(unique_lock&& other) noexcept : m(other.m), owns(other.owns) {
+    other.m = nullptr;
+    other.owns = false;
+  }
+
+  ~unique_lock() {
+    if (owns && m) {
+      m->unlock();
+    }
+  }
+
+  unique_lock& operator=(unique_lock&& other) noexcept {
+    if (owns && m) {
+      m->unlock();
+    }
+    m = other.m;
+    owns = other.owns;
+    other.m = nullptr;
+    other.owns = false;
+    return *this;
+  }
+
+  unique_lock(const unique_lock&) = delete;
+  unique_lock& operator=(const unique_lock&) = delete;
+
+  void lock() {
+    if (!m || owns) {
+      abort();
+    }
+    m->lock();
+    owns = true;
+  }
+
+  bool try_lock() {
+    if (!m || owns) {
+      abort();
+    }
+    owns = m->try_lock();
+    return owns;
+  }
+
+  void unlock() {
+    if (!m || !owns) {
+      abort();
+    }
+    m->unlock();
+    owns = false;
+  }
+
+  bool owns_lock() const noexcept { return owns; }
+
+  mutex_type* release() noexcept {
+    mutex_type* temp = m;
+    m = nullptr;
+    owns = false;
+    return temp;
+  }
+
+ private:
+  mutex_type* m;
+  bool owns;
+};
+
+}  // namespace std
+
+#endif
