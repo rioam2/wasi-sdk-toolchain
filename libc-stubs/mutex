@@ -7,7 +7,6 @@
 // Stub basic mutex types if the standard library doesn't provide them.
 #ifdef _LIBCPP_HAS_NO_THREADS
 
-#include_next <chrono>
 #include_next <tuple>
 #include_next <utility>
 

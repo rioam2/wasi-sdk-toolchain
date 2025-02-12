@@ -10,17 +10,50 @@
 
 namespace std {
 
-class thread::id {
+class thread {
  public:
-  id() noexcept : _dummy(0) {}
+  using native_handle_type = void*;
 
-  bool operator==(const id&) const noexcept { return true; }
-  bool operator!=(const id&) const noexcept { return false; }
-  bool operator<(const id&) const noexcept { return false; }
+  thread() noexcept {}
 
- private:
-  // Dummy value for stub purposes.
-  unsigned long _dummy;
+  template <class Function, class... Args>
+  explicit thread(Function&&, Args&&...) {
+    // Stub: Does not actually create a new thread.
+  }
+
+  thread(const thread&) = delete;
+  thread& operator=(const thread&) = delete;
+
+  thread(thread&&) noexcept {}
+
+  thread& operator=(thread&&) noexcept { return *this; }
+
+  bool joinable() const noexcept { return false; }
+
+  void join() {
+    // Stub: No thread to join.
+  }
+
+  void detach() {
+    // Stub: No thread to detach.
+  }
+
+  native_handle_type native_handle() { return nullptr; }
+
+  class id {
+   public:
+    id() noexcept : _dummy(0) {}
+
+    bool operator==(const id&) const noexcept { return true; }
+
+    bool operator!=(const id&) const noexcept { return false; }
+
+    bool operator<(const id&) const noexcept { return false; }
+
+   private:
+    // Dummy value for stub purposes.
+    unsigned long _dummy;
+  };
 };
 
 }  // namespace std
