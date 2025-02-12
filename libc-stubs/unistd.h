@@ -41,9 +41,11 @@ int sethostname(const char* name, size_t len);
 #ifndef _LIBCPP_HAS_DEFINED_TERMINATE
 #define _LIBCPP_HAS_DEFINED_TERMINATE
 
+#ifdef __cplusplus
 namespace std {
 [[noreturn]] void terminate() noexcept;
 }  // namespace std
+#endif
 
 #endif
 

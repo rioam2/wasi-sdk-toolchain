@@ -229,9 +229,10 @@ class unique_lock {
 #ifndef _LIBCPP_HAS_DEFINED_TERMINATE
 #define _LIBCPP_HAS_DEFINED_TERMINATE
 
-#include_next <cstdlib>
+#ifdef __cplusplus
 namespace std {
 [[noreturn]] void terminate() noexcept;
 }  // namespace std
+#endif
 
 #endif
