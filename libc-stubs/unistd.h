@@ -38,6 +38,16 @@ int syscall(int, ...);
 int gethostname(char* name, size_t len);
 int sethostname(const char* name, size_t len);
 
+#ifndef _LIBCPP_HAS_DEFINED_TERMINATE
+#define _LIBCPP_HAS_DEFINED_TERMINATE
+
+#include_next <cstdlib>
+namespace std {
+[[noreturn]] void terminate() noexcept;
+}  // namespace std
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
