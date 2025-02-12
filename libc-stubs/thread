@@ -1,0 +1,28 @@
+#pragma once
+
+#if !defined(_LIBCPP_HAS_NO_THREADS)
+
+#if __has_include_next(<thread>)
+#include_next <thread>
+#endif
+
+#else
+
+namespace std {
+
+class thread::id {
+ public:
+  id() noexcept : _dummy(0) {}
+
+  bool operator==(const id&) const noexcept { return true; }
+  bool operator!=(const id&) const noexcept { return false; }
+  bool operator<(const id&) const noexcept { return false; }
+
+ private:
+  // Dummy value for stub purposes.
+  unsigned long _dummy;
+};
+
+}  // namespace std
+
+#endif
