@@ -7,10 +7,102 @@
 // Stub basic mutex types if the standard library doesn't provide them.
 #ifdef _LIBCPP_HAS_NO_THREADS
 
+#include_next <chrono>
 #include_next <tuple>
 #include_next <utility>
 
 namespace std {
+
+class condition_variable {
+ public:
+  condition_variable() noexcept {}
+
+  ~condition_variable() = default;
+
+  condition_variable(const condition_variable&) = delete;
+  condition_variable& operator=(const condition_variable&) = delete;
+
+  template <class Lock>
+  void wait(Lock&) {
+    // no-op: single-threaded implementation
+  }
+
+  template <class Lock, class Predicate>
+  void wait(Lock& lock, Predicate pred) {
+    while (!pred())
+      wait(lock);
+  }
+
+  template <class Lock, class Rep, class Period>
+  bool wait_for(Lock& lock, const std::chrono::duration<Rep, Period>&) {
+    wait(lock);
+    return true;
+  }
+
+  template <class Lock, class Rep, class Period, class Predicate>
+  bool wait_for(Lock& lock,
+                const std::chrono::duration<Rep, Period>& rel_time,
+                Predicate pred) {
+    while (!pred())
+      wait_for(lock, rel_time);
+    return true;
+  }
+
+  template <class Lock, class Clock, class Duration>
+  bool wait_until(Lock& lock, const std::chrono::time_point<Clock, Duration>&) {
+    wait(lock);
+    return true;
+  }
+
+  template <class Lock, class Clock, class Duration, class Predicate>
+  bool wait_until(Lock& lock,
+                  const std::chrono::time_point<Clock, Duration>& abs_time,
+                  Predicate pred) {
+    while (!pred())
+      wait_until(lock, abs_time);
+    return true;
+  }
+
+  void notify_one() noexcept {
+    // no-op: single-threaded implementation
+  }
+
+  void notify_all() noexcept {
+    // no-op: single-threaded implementation
+  }
+};
+
+class mutex {
+ public:
+  mutex() noexcept {}
+
+  ~mutex() = default;
+
+  mutex(const mutex&) = delete;
+  mutex& operator=(const mutex&) = delete;
+
+  void lock() { /* No-op: single-threaded implementation */ }
+
+  bool try_lock() noexcept { return true; }
+
+  void unlock() { /* No-op: single-threaded implementation */ }
+};
+
+class recursive_mutex {
+ public:
+  recursive_mutex() noexcept {}
+
+  ~recursive_mutex() = default;
+
+  recursive_mutex(const recursive_mutex&) = delete;
+  recursive_mutex& operator=(const recursive_mutex&) = delete;
+
+  void lock() { /* No-op: single-threaded implementation */ }
+
+  bool try_lock() noexcept { return true; }
+
+  void unlock() { /* No-op: single-threaded implementation */ }
+};
 
 struct defer_lock_t {
   explicit constexpr defer_lock_t() = default;
@@ -30,12 +122,15 @@ class scoped_lock {
   explicit scoped_lock(Mutexes&... mutexes) : mutexes_(mutexes...) {
     std::apply([](auto&... m) { (m.lock(), ...); }, mutexes_);
   }
+
   ~scoped_lock() noexcept { unlock(); }
+
   scoped_lock(const scoped_lock&) = delete;
   scoped_lock& operator=(const scoped_lock&) = delete;
 
  private:
   std::tuple<Mutexes&...> mutexes_;
+
   void unlock() noexcept {
     std::apply([](auto&... m) { (m.unlock(), ...); }, mutexes_);
   }
@@ -50,16 +145,21 @@ class unique_lock {
   using mutex_type = Mutex;
 
   unique_lock() noexcept : m(nullptr), owns(false) {}
+
   explicit unique_lock(mutex_type& mtx) : m(&mtx), owns(false) {
     m->lock();
     owns = true;
   }
+
   unique_lock(mutex_type& mtx, std::defer_lock_t) noexcept
       : m(&mtx), owns(false) {}
+
   unique_lock(mutex_type& mtx, std::try_to_lock_t)
       : m(&mtx), owns(m->try_lock()) {}
+
   unique_lock(mutex_type& mtx, std::adopt_lock_t) noexcept
       : m(&mtx), owns(true) {}
+
   unique_lock(unique_lock&& other) noexcept : m(other.m), owns(other.owns) {
     other.m = nullptr;
     other.owns = false;
