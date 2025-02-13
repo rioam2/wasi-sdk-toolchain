@@ -133,9 +133,11 @@ function(wit_bindgen)
         message(FATAL_ERROR "WebAssembly Component Interface (WIT) bindings failed to generate. \n${wit_codegen_output} \n${wit_codegen_result}")
     endif()
 
-    # Scrape generated files from wit-bindgen
-    string(REGEX MATCHALL "\"[^\"\\ ]+.(c|h|o)\"" wit_codegen_output_files "${wit_codegen_output}")
-    string(REGEX MATCHALL "[^\"\\ ]+" wit_codegen_output_files "${wit_codegen_output_files}")
+    file(GLOB wit_codegen_output_files
+        "${arg_BINDINGS_DIR_INPUT}/*.c"
+        "${arg_BINDINGS_DIR_INPUT}/*.h"
+        "${arg_BINDINGS_DIR_INPUT}/*.o"
+    )
 
     # Set output variable to list of generated files
     set(${arg_GENERATED_FILES_OUTPUT}
