@@ -135,6 +135,7 @@ function(wit_bindgen)
 
     # Scrape generated files from wit-bindgen
     string(REGEX MATCHALL "\"[^\"\\ ]+.(c|h|o)\"" wit_codegen_output_files "${wit_codegen_output}")
+    string(REGEX MATCHALL "[^\"\\ ]+" wit_codegen_output_files "${wit_codegen_output_files}")
 
     # Set output variable to list of generated files
     set(${arg_GENERATED_FILES_OUTPUT}
