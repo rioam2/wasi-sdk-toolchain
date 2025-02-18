@@ -17,7 +17,7 @@ FetchContent_Declare(
   wasi_sdk_toolchain
   SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/wasi-sdk"
   GIT_REPOSITORY https://github.com/rioam2/wasi-sdk-toolchain.git
-  GIT_TAG scratch/make-init-generic
+  GIT_TAG main
 )
 FetchContent_MakeAvailable(wasi_sdk_toolchain)
 set(FETCHCONTENT_FULLY_DISCONNECTED ${FETCHCONTENT_FULLY_DISCONNECTED_OLD})
@@ -32,13 +32,13 @@ initialize_wasi_toolchain(
   WASMTIME_TAG "v23.0.1"
   WASM_TOOLS_TAG "v1.215.0"
   WASI_SDK_TAG "wasi-sdk-23"
-  TARGET_TRIPLET "wasm32-wasip1-threads"
+  TARGET_TRIPLET "wasm32-wasip1"
 )
 ```
 
 `FETCHCONTENT_FULLY_DISCONNECTED` is forced to off to ensure that the toolchain is always fetched and loaded, regardless of your project's configuration. It is set back to it's original value after the toolchain is loaded.
 
-The tag in this example is set to `wasi-sdk-23`. This is configurable and can be set to any tag within this repository.
+The tag in this example is set to `main`. This is configurable and can be set to any tag within this repository. It is recommended to use a specific tag version to prevent breaking changes affecting your project silently.
 
 Finally, set this CMake cache variable:
 
