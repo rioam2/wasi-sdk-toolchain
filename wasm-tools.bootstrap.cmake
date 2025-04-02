@@ -180,25 +180,24 @@ function(wasm_create_component)
     endif()
 
     # Get source target name
-    cmake_policy(GET CMP0026 CMP0026_BEFORE)
-    cmake_policy(SET CMP0026 OLD)
-    get_property(src_target_loc TARGET ${arg_CORE_WASM_TARGET} PROPERTY LOCATION)
-    cmake_policy(SET CMP0026 ${CMP0026_BEFORE})
+    get_target_property(src_target_name ${arg_CORE_WASM_TARGET} OUTPUT_NAME)
+    get_filename_component(src_target_basename ${src_target_name} NAME_WE)
 
     # Derive name of component output
-    get_filename_component(src_target_name ${src_target_loc} NAME_WE)
-    get_filename_component(src_target_dir ${src_target_loc} DIRECTORY)
-    set(component_output_file "${src_target_dir}/${src_target_name}_component.wasm")
+    set(component_output_file "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${src_target_basename}_component.wasm")
 
-    # Add a custom command to create the webassembly component
+    # Add a custom command to create the WebAssembly component
     add_custom_command(
         OUTPUT "${component_output_file}"
-        COMMAND ${_wasm_tools_binary} component new $<TARGET_FILE:${arg_CORE_WASM_TARGET}> -o "${component_output_file}" --adapt "${_wasm_tools_polyfill_dir}/wasi_snapshot_preview1.${arg_COMPONENT_TYPE}.wasm"
+        COMMAND ${_wasm_tools_binary} component new 
+            $<TARGET_FILE:${arg_CORE_WASM_TARGET}> 
+            -o "${component_output_file}" 
+            --adapt "${_wasm_tools_polyfill_dir}/wasi_snapshot_preview1.${arg_COMPONENT_TYPE}.wasm"
         DEPENDS ${arg_CORE_WASM_TARGET}
         COMMENT "Creating WebAssembly component ${component_output_file}"
     )
-
-    # Add a custom target that depends on the zip file
+    
+    # Create a custom target that depends on the output file
     add_custom_target(
         "${arg_COMPONENT_TARGET}" ALL
         DEPENDS "${component_output_file}"
