@@ -54,7 +54,7 @@ function(initialize_wasi_toolchain)
     
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
     wasi_sdk_bootstrap(
-      TAG wasi-sdk-23
+      TAG "${arg_WASI_SDK_TAG}"
       WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
       WASI_SDK_BIN_OUTPUT WASI_SDK_BIN
     )
