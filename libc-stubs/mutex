@@ -123,9 +123,6 @@ class scoped_lock {
   }
 };
 
-template <class... Mutexes>
-using lock_guard = scoped_lock<Mutexes...>;
-
 template <typename Mutex>
 class unique_lock {
  public:
