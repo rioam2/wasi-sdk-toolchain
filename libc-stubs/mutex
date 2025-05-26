@@ -103,18 +103,6 @@ class recursive_mutex {
   void unlock() { /* No-op: single-threaded implementation */ }
 };
 
-struct defer_lock_t {
-  explicit constexpr defer_lock_t() = default;
-};
-
-struct adopt_lock_t {
-  explicit constexpr adopt_lock_t() = default;
-};
-
-struct try_to_lock_t {
-  explicit constexpr try_to_lock_t() = default;
-};
-
 template <class... Mutexes>
 class scoped_lock {
  public:
