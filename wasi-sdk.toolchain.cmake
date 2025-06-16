@@ -122,8 +122,8 @@ function(initialize_wasi_toolchain)
     add_library(wasi_sdk_reactor_module INTERFACE)
     target_link_options(wasi_sdk_reactor_module INTERFACE -nostartfiles -Wl,--no-entry)
     
-    add_library(wasi_sdk_stub_libc_unimplmented INTERFACE)
-    target_compile_options(wasi_sdk_stub_libc_unimplmented INTERFACE -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include/wasi_stub_libc_unimplmented")
+    # add_library(wasi_sdk_stub_libc_unimplmented INTERFACE)
+    # target_compile_options(wasi_sdk_stub_libc_unimplmented INTERFACE -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include/wasi_stub_libc_unimplmented")
 
     # Set the toolchain as initialized
     set(WASI_TOOLCHAIN_INITIALIZED ON PARENT_SCOPE)
