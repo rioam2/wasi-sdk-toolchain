@@ -75,16 +75,16 @@ function(wit_bindgen_bootstrap)
         else()
         message(STATUS "Successfully downloaded wit-bindgen binary to ${wit_bindgen_tarball_path}")
         endif()
+
+       # Extract wit-bindgen sysroot to cache directory
+        message(STATUS "Extracting wit-bindgen binary to ${wit_bindgen_root}")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar xzf ${wit_bindgen_tarball_path}
+            WORKING_DIRECTORY ${wit_bindgen_root}
+        )
     else()
         message(STATUS "wit-bindgen binary has already been downloaded and cached.")
     endif()
-
-    # Extract wit-bindgen sysroot to cache directory
-    message(STATUS "Extracting wit-bindgen binary to ${wit_bindgen_root}")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar xzf ${wit_bindgen_tarball_path}
-        WORKING_DIRECTORY ${wit_bindgen_root}
-    )
 
     # Set location of wit-bindgen
     set(${arg_WIT_BINDGEN_BINARY_OUTPUT}
