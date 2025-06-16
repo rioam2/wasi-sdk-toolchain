@@ -139,16 +139,16 @@ function(wasm_tools_bootstrap)
         else()
         message(STATUS "Successfully downloaded wasm-tools binary to ${wasm_tools_tarball_path}")
         endif()
+        # Extract wasm-tools sysroot to cache directory
+        message(STATUS "Extracting wasm-tools binary to ${wasm_tools_root}")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasm_tools_tarball_path}
+            WORKING_DIRECTORY ${wasm_tools_root}
+        )
     else()
         message(STATUS "wasm-tools binary has already been downloaded and cached.")
     endif()
 
-    # Extract wasm-tools sysroot to cache directory
-    message(STATUS "Extracting wasm-tools binary to ${wasm_tools_root}")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasm_tools_tarball_path}
-        WORKING_DIRECTORY ${wasm_tools_root}
-    )
 
     # Set location of wasm-tools
     set(${arg_WASM_TOOLS_BINARY_OUTPUT}
