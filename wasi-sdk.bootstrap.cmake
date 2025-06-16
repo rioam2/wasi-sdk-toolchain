@@ -84,11 +84,13 @@ function(wasi_sdk_bootstrap)
   endif()
 
   # Extract wasi-sdk toolchain to cache directory
-  message(STATUS "Extracting wasi-sdk toolchain to ${wasi_sdk_root}")
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasi_sdk_tarball_path}
-    WORKING_DIRECTORY ${wasi_sdk_root}
-  )
+  if (NOT EXISTS "${wasi_sdk_root}/wasi-sdk-${wasi_sdk_version}-${host_identifier}")
+    message(STATUS "Extracting wasi-sdk toolchain to ${wasi_sdk_root}")
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasi_sdk_tarball_path}
+      WORKING_DIRECTORY ${wasi_sdk_root}
+    )
+  endif()
 
   set(${arg_WASI_SYSROOT_OUTPUT}
       "${wasi_sdk_root}/wasi-sdk-${wasi_sdk_version}-${host_identifier}/share/wasi-sysroot"
