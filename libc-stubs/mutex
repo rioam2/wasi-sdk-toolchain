@@ -106,21 +106,16 @@ class recursive_mutex {
 template <class... Mutexes>
 class scoped_lock {
  public:
-  explicit scoped_lock(Mutexes&... mutexes) : mutexes_(mutexes...) {
-    std::apply([](auto&... m) { (m.lock(), ...); }, mutexes_);
+  explicit scoped_lock(Mutexes&... mutexes) {
+    // No-op: single-threaded implementation
   }
 
-  ~scoped_lock() noexcept { unlock(); }
+  ~scoped_lock() noexcept {
+    // No-op: single-threaded implementation
+  }
 
   scoped_lock(const scoped_lock&) = delete;
   scoped_lock& operator=(const scoped_lock&) = delete;
-
- private:
-  std::tuple<Mutexes&...> mutexes_;
-
-  void unlock() noexcept {
-    std::apply([](auto&... m) { (m.unlock(), ...); }, mutexes_);
-  }
 };
 
 template <typename Mutex>
@@ -216,7 +211,7 @@ class unique_lock {
 
 #ifdef __cplusplus
 namespace std {
-[[noreturn]] void terminate() noexcept;
+void terminate() noexcept;
 }  // namespace std
 #endif
 
