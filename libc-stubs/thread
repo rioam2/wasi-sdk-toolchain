@@ -56,6 +56,31 @@ class thread {
   };
 };
 
+namespace this_thread {
+
+inline thread::id get_id() noexcept {
+  return thread::id();
+}
+
+template <class Clock, class Duration>
+void sleep_until(const chrono::time_point<Clock, Duration>&) {
+  // Stub: No actual sleep functionality
+  abort();
+}
+
+template <class Rep, class Period>
+void sleep_for(const chrono::duration<Rep, Period>&) {
+  // Stub: No actual sleep functionality
+  abort();
+}
+
+inline void yield() noexcept {
+  // Stub: No actual yield functionality
+  abort();
+}
+
+}  // namespace this_thread
+
 }  // namespace std
 
 #endif
