@@ -1,0 +1,114 @@
+#pragma once
+
+#if !defined(_LIBCPP_HAS_NO_THREADS)
+
+#if __has_include_next(<future>)
+#include_next <future>
+#endif
+
+#else
+
+namespace std {
+
+// Minimal future_status enum
+enum class future_status { ready, timeout, deferred };
+
+// Minimal launch policy enum
+enum class launch {
+  async = 0x1,
+  deferred = 0x2,
+  any = async | deferred,
+};
+
+// Minimal future stub
+template <class T>
+class future {
+ public:
+  future() = default;
+  future(future&&) = default;
+  future(const future&) = delete;
+
+  future& operator=(future&&) = default;
+  future& operator=(const future&) = delete;
+
+  ~future() = default;
+
+  // Core functionality - all abort
+  bool valid() const {
+    std::abort();
+    return false;
+  }
+  T get() {
+    std::abort();
+    return T{};
+  }
+  void wait() const { std::abort(); }
+
+  template <class Rep, class Period>
+  future_status wait_for(
+      const std::chrono::duration<Rep, Period>& rel_time) const {
+    std::abort();
+    return future_status::ready;
+  }
+
+  template <class Clock, class Duration>
+  future_status wait_until(
+      const std::chrono::time_point<Clock, Duration>& abs_time) const {
+    abs_time;  // Unused parameter suppression
+    std::abort();
+    return future_status::ready;
+  }
+};
+
+// Specialization for void
+template <>
+class future<void> {
+ public:
+  future() = default;
+  future(future&&) = default;
+  future(const future&) = delete;
+
+  future& operator=(future&&) = default;
+  future& operator=(const future&) = delete;
+
+  ~future() = default;
+
+  bool valid() const {
+    std::abort();
+    return false;
+  }
+  void get() { std::abort(); }
+  void wait() const { std::abort(); }
+
+  template <class Rep, class Period>
+  future_status wait_for(
+      const std::chrono::duration<Rep, Period>& rel_time) const {
+    std::abort();
+    return future_status::ready;
+  }
+
+  template <class Clock, class Duration>
+  future_status wait_until(
+      const std::chrono::time_point<Clock, Duration>& abs_time) const {
+    std::abort();
+    return future_status::ready;
+  }
+};
+
+// Stub implementation of std::async
+template <class F, class... Args>
+future<typename std::result_of<F(Args...)>::type> async(F&& f, Args&&... args) {
+  std::abort();
+  return future<typename std::result_of<F(Args...)>::type>{};
+}
+
+template <class F, class... Args>
+future<typename std::result_of<F(Args...)>::type> async(launch policy,
+                                                        F&& f,
+                                                        Args&&... args) {
+  std::abort();
+  return future<typename std::result_of<F(Args...)>::type>{};
+}
+}  // namespace std
+
+#endif
