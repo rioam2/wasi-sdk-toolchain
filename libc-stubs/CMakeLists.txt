@@ -13,6 +13,7 @@ add_library(c-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/signal.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/time.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/unistd.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/eventfd.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/file.c"
 )
 
@@ -24,6 +25,7 @@ add_library(cxx-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/thread.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/time.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/unistd.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/eventfd.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/file.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/mman.cpp"
 )
