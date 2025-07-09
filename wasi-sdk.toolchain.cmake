@@ -10,7 +10,7 @@ function(initialize_wasi_toolchain)
     cmake_parse_arguments(
         PARSE_ARGV 0 "arg"
         ""
-        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET"
+        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET;ENABLE_EXPERIMENTAL_STUBS"
         ""
     )
     if (DEFINED arg_UNPARSED_ARGUMENTS)
@@ -88,10 +88,21 @@ function(initialize_wasi_toolchain)
     set(LIBCXX_USE_COMPILER_RT "YES" PARENT_SCOPE)
     set(LIBCXXABI_USE_COMPILER_RT "YES" PARENT_SCOPE)
     
-    # Global compiler flags - all targets should use compiler-rt builtins from wasi-sdk
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs'" PARENT_SCOPE)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs'" PARENT_SCOPE)
+    # Add include directory from the toolchain - provides helper headers from the SDK
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include'" PARENT_SCOPE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include'" PARENT_SCOPE)
     
+    # Optionally add experimental stubs for libc functions
+    if (arg_ENABLE_EXPERIMENTAL_STUBS)
+      # Add libc-stubs include directories
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
+      # Include libc-stubs static library for linking
+      set(LIBC_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libc-stubs.a" CACHE FILEPATH "Path to libc stubs")
+      set(LIBCXX_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libcxx-stubs.a" CACHE FILEPATH "Path to libcxx stubs")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_LINKER_FLAGS} ${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH}" PARENT_SCOPE)
+    endif()
+
     # Release-specific compiler and linker flags because CMake does not automatically include them
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" PARENT_SCOPE)
     add_link_options($<$<CONFIG:Release>:-Wl,--strip-debug,--lto-O2,--lto-CGO3,-O3>)
@@ -114,16 +125,9 @@ function(initialize_wasi_toolchain)
       -lwasi-emulated-getpid
     )
     
-    # Interface library to enable stubbing exceptions so that they abort upon throw
-    add_library(wasi_sdk_stub_exceptions INTERFACE)
-    target_compile_options(wasi_sdk_stub_exceptions INTERFACE -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include/wasi_abort_exceptions")
-    
     # Interface library to enable reactor model WebAssembly files
     add_library(wasi_sdk_reactor_module INTERFACE)
     target_link_options(wasi_sdk_reactor_module INTERFACE -nostartfiles -Wl,--no-entry)
-    
-    add_library(wasi_sdk_stub_libc_unimplmented INTERFACE)
-    target_compile_options(wasi_sdk_stub_libc_unimplmented INTERFACE -include "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include/wasi_stub_libc_unimplmented")
 
     # Set the toolchain as initialized
     set(WASI_TOOLCHAIN_INITIALIZED ON PARENT_SCOPE)

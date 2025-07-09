@@ -1,0 +1,3 @@
+extern "C" {
+char* tzname[2] = {0x00, 0x00};
+}
