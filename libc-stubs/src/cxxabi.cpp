@@ -1,5 +1,3 @@
-#pragma once
-
 #include <__exception/exception_ptr.h>
 #include <cxxabi.h>
 #include <stdio.h>
@@ -8,7 +6,7 @@
 #include <typeinfo>
 
 extern "C" {
-void* __cxa_allocate_exception(size_t) {
+void* __cxa_allocate_exception(size_t) throw() {
   fprintf(stderr, "Exceptions are not implemented in wasi-libc. Aborting.");
   abort();
 }
@@ -16,11 +14,11 @@ void* __cxa_allocate_exception(size_t) {
 void __cxa_throw(void* thrown_exception,
                  std::type_info* tinfo,
 #ifdef __wasm__
-                 void*(_LIBCXXABI_DTOR_FUNC* dest)(void*))
+                 void*(_LIBCXXABI_DTOR_FUNC* dest)(void*)
 #else
-                 void(_LIBCXXABI_DTOR_FUNC* dest)(void*))
+                 void(_LIBCXXABI_DTOR_FUNC* dest)(void*)
 #endif
-{
+) {
   fprintf(stderr, "Exceptions are not implemented in wasi-libc. Aborting.");
   abort();
 }
