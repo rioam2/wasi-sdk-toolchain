@@ -5,10 +5,11 @@
 
 
 int setjmp(jmp_buf env) { 
-    return 0; 
+  fprintf(stderr, "setjmp is not implemented in wasi-libc. Aborting."); 
+  abort(); 
 }
 
 void longjmp(jmp_buf env, int status) { 
-    fprintf(stderr, "longjmp is not implemented in wasi-libc. Aborting."); 
-    abort(); 
+  fprintf(stderr, "longjmp is not implemented in wasi-libc. Aborting."); 
+  abort(); 
 }

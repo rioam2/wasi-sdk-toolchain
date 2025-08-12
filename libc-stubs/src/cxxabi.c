@@ -10,8 +10,10 @@
 
 extern "C" {
 void* __cxa_allocate_exception(size_t) {
-    fprintf(stderr, "Exceptions are not implemented in wasi-libc. Aborting.");
-    abort();
+  fprintf(
+      stderr, 
+      "__cxa_allocate_exception are not implemented in wasi-libc. Aborting.");
+  abort();
 }
 
 void __cxa_throw(void* thrown_exception,
@@ -23,8 +25,8 @@ void __cxa_throw(void* thrown_exception,
 #endif
 )
 {
-    fprintf(stderr, "Exceptions are not implemented in wasi-libc. Aborting.");
-    abort();
+  fprintf(stderr, "__cxa_throw are not implemented in wasi-libc. Aborting.");
+  abort();
 }
 }
 #endif

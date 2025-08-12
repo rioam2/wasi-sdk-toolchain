@@ -47,7 +47,7 @@ int sethostname(const char* name, size_t len);
 
 #ifdef __cplusplus
 namespace std {
-[[noreturn]] void terminate() noexcept;
+void terminate() noexcept;
 }  // namespace std
 #endif
 

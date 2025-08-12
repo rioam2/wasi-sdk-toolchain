@@ -1,13 +1,13 @@
-#include <cstdlib>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdnoreturn.h>
 
-// Stub implementations for thread-related functions when building without
-// threads.
 #if defined(_LIBCPP_HAS_NO_THREADS)
 extern "C" {
 int __cxa_thread_atexit(void (*func)(void*), void* arg, void* dso_handle) {
-  // This implementation ignores thread-specific cleanup.
+  fprintf(stderr,
+          "__cxa_thread_atexit is not implemented in wasi-libc. Aborting.");
   abort();
-  return 0;
 }
 }
 #endif
