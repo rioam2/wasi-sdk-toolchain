@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(c-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/fcntl.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/setjmp.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/signal.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/time.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/unistd.c"
@@ -20,7 +19,6 @@ add_library(c-stubs STATIC
 add_library(cxx-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/cxxabi.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/fcntl.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/setjmp.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/signal.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/thread.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/time.cpp"

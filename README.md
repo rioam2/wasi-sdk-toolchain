@@ -31,9 +31,10 @@ initialize_wasi_toolchain(
   WIT_BINDGEN_TAG "v0.29.0" // Version of wit-bindgen for component model c++ binding generation
   WASMTIME_TAG "v23.0.1" // Version of wasmtime to use for wasi-v0.2->wasip1 polyfills
   WASM_TOOLS_TAG "v1.215.0" // Version of wasm-tools to use for component creation
-  WASI_SDK_TAG "wasi-sdk-23" // Upstream version of wasi-sdk toolchain
-  TARGET_TRIPLET "wasm32-wasip1" // Can be set to any of the wasi target triplets supported by wasi-sdk
+  WASI_SDK_TAG "wasi-sdk-29" // Upstream version of wasi-sdk toolchain
+  TARGET_TRIPLET "wasm32-wasi" // Can be set to any of the wasi target triplets supported by wasi-sdk
   ENABLE_EXPERIMENTAL_STUBS OFF // Turn on experimental stubs for unsupported libc functionality
+  ENABLE_EXPERIMENTAL_SETJMP OFF // Turn on experimental setjmp/longjmp functionality
 )
 ```
 

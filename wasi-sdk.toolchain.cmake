@@ -10,7 +10,7 @@ function(initialize_wasi_toolchain)
     cmake_parse_arguments(
         PARSE_ARGV 0 "arg"
         ""
-        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET;ENABLE_EXPERIMENTAL_STUBS"
+        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET;ENABLE_EXPERIMENTAL_STUBS;ENABLE_EXPERIMENTAL_SETJMP"
         ""
     )
     if (DEFINED arg_UNPARSED_ARGUMENTS)
@@ -95,21 +95,77 @@ function(initialize_wasi_toolchain)
     # Optionally add experimental stubs for libc functions
     if (arg_ENABLE_EXPERIMENTAL_STUBS)
       # Add libc-stubs include directories
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
+       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
+       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
       # Include libc-stubs static library for linking
-      set(LIBC_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libc-stubs.a" CACHE FILEPATH "Path to libc stubs")
-      set(LIBCXX_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libcxx-stubs.a" CACHE FILEPATH "Path to libcxx stubs")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_LINKER_FLAGS} ${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH}" PARENT_SCOPE)
+       set(LIBC_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libc-stubs.a" CACHE FILEPATH "Path to libc stubs")
+       set(LIBCXX_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libcxx-stubs.a" CACHE FILEPATH "Path to libcxx stubs")
+      add_link_options(${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH})
     endif()
 
-    # Release-specific compiler and linker flags because CMake does not automatically include them
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" PARENT_SCOPE)
-    add_link_options($<$<CONFIG:Release>:-Wl,--strip-debug,--lto-O2,--lto-CGO3,-O3>)
+    if (arg_ENABLE_EXPERIMENTAL_SETJMP)
+      # Enable SJLJ support
+      add_compile_options(-mllvm -wasm-enable-sjlj -mllvm)
+      add_link_options(-mllvm -wasm-enable-sjlj -lsetjmp -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false)
+    endif()
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+      # Debug-specific compiler settings
+      add_compile_definitions(DEBUG_ENABLED=1)
+      add_compile_options(
+        -O0                       # no optimization for easier debugging
+        -g                        # include debug symbols
+        -fno-inline               # disable inlining for easier debugging
+        -fno-omit-frame-pointer   # keep frame pointer for stack traces
+      )
+    else()
+      # Release-specific compiler optimizations
+      add_compile_options(
+        -O3                           # maximum optimization
+        -flto                         # link-time optimization
+        -ffast-math                   # aggressive floating-point optimizations
+        
+        # WASM specific performance flags
+        -msimd128                     # enable WASM SIMD instructions
+        -mbulk-memory                 # enable bulk memory operations
+        -mmultivalue                  # enable multivalue returns
+        -msign-ext                    # enable sign extension operators
+        -mnontrapping-fptoint         # speed up float-to-int conversions
+        
+        # Inlining and unrolling, only clang-compatible
+        -finline-functions            # inline functions aggressively
+        -funroll-loops                # unroll loops for speed
+        -fvectorize                   # auto-vectorization
+        -fslp-vectorize               # superword-level parallelism vectorization
+        
+        # Memory and code generation
+        -fomit-frame-pointer          # free up register
+        -fstrict-aliasing             # assume strict aliasing rules
+        
+        # Clang-specific optimizations
+        -fdata-sections               # place data in separate sections
+        -ffunction-sections           # place functions in separate sections
+        -fmerge-all-constants         # merge identical constants
+      )
+
+      # Release-specific linker optimizations
+      add_link_options(
+        -O3                             # optimize for speed
+        -flto                           # link-time optimization       
+        -Wl,--lto-O3                    # link-time optimization level 3
+        -Wl,--gc-sections               # remove unused sections
+        -Wl,--initial-memory=67108864   # initial memory size (64MB)
+        -Wl,-z,stack-size=2097152       # stack size (2MB)
+      )
+
+      # Enable interprocedural optimization
+      set_property(GLOBAL PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+    
     
     # Project compiler flags
     add_compile_options(
-      -stdlib=libc++
+      $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>
       -fignore-exceptions
       -D_WASI_EMULATED_SIGNAL
       -D_WASI_EMULATED_PROCESS_CLOCKS
