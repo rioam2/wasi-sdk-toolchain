@@ -103,13 +103,56 @@ function(initialize_wasi_toolchain)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_LINKER_FLAGS} ${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH}" PARENT_SCOPE)
     endif()
 
-    # Release-specific compiler and linker flags because CMake does not automatically include them
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" PARENT_SCOPE)
-    add_link_options($<$<CONFIG:Release>:-Wl,--strip-debug,--lto-O2,--lto-CGO3,-O3>)
+    # Enable SJLJ support
+    add_compile_options(-mllvm -wasm-enable-sjlj -mllvm)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mllvm -wasm-enable-sjlj -lsetjmp -mllvm -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false,setjmp" PARENT_SCOPE)
+
+    # Release and Debug specific compiler and linker flags because CMake does not automatically include them
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+      add_compile_options(
+        -O0                       # no optimization for easier debugging
+        -g                        # include debug symbols
+        -fno-inline               # disable inlining for easier debugging
+        -fno-omit-frame-pointer   # keep frame pointer for stack traces
+      )
+    else()
+      # Release-specific compiler optimizations
+      add_compile_options(
+        -O3                           # maximum optimization
+        -flto                         # link-time optimization
+        -ffast-math                   # aggressive floating-point optimizations
+        -msimd128                     # enable WASM SIMD instructions
+        -mbulk-memory                 # enable bulk memory operations
+        -mmultivalue                  # enable multivalue returns
+        -msign-ext                    # enable sign extension operators
+        -mnontrapping-fptoint         # speed up float-to-int conversions
+        -finline-functions            # inline functions aggressively
+        -funroll-loops                # unroll loops for speed
+        -fvectorize                   # auto-vectorization
+        -fslp-vectorize               # superword-level parallelism vectorization
+        -fomit-frame-pointer          # free up register
+        -fstrict-aliasing             # assume strict aliasing rules
+        -fdata-sections               # place data in separate sections
+        -ffunction-sections           # place functions in separate sections
+        -fmerge-all-constants         # merge identical constants
+      )
+      # Release-specific linker optimizations
+      add_link_options(
+        -O3                             # optimize for speed
+        -flto                           # link-time optimization       
+        -Wl,--lto-O3                    # link-time optimization level 3
+        -Wl,--gc-sections               # remove unused sections
+        -Wl,--initial-memory=16777216   # initial memory size (16MB)
+        -Wl,-z,stack-size=1048576       # stack size (1MB)
+      )
+      # Enable interprocedural optimization
+      set_property(GLOBAL PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+    
     
     # Project compiler flags
     add_compile_options(
-      -stdlib=libc++
+      $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>
       -fignore-exceptions
       -D_WASI_EMULATED_SIGNAL
       -D_WASI_EMULATED_PROCESS_CLOCKS
@@ -123,6 +166,7 @@ function(initialize_wasi_toolchain)
       -lwasi-emulated-mman
       -lwasi-emulated-process-clocks
       -lwasi-emulated-getpid
+      -lsetjmp
     )
     
     # Interface library to enable reactor model WebAssembly files
