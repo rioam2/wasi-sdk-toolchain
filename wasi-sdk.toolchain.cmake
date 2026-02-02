@@ -152,7 +152,8 @@ function(initialize_wasi_toolchain)
       add_link_options(
         -O3                             # optimize for speed
         -flto                           # link-time optimization       
-        -Wl,--lto-O3                    # link-time optimization level 3
+        -Wl,-O3,--lto-O3,--lto-CGO3     # link-time optimization level 3
+        -Wl,--strip-debug               # remove debug symbols
         -Wl,--gc-sections               # remove unused sections
         -Wl,--initial-memory=67108864   # initial memory size (64MB)
         -Wl,-z,stack-size=2097152       # stack size (2MB)
