@@ -105,65 +105,52 @@ function(initialize_wasi_toolchain)
 
     if (arg_ENABLE_EXPERIMENTAL_SETJMP)
       # Enable SJLJ support
-      add_compile_options(-mllvm -wasm-enable-sjlj -mllvm)
+      add_compile_options(-mllvm -wasm-enable-sjlj)
       add_link_options(-mllvm -wasm-enable-sjlj -lsetjmp -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false)
     endif()
 
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-      # Debug-specific compiler settings
-      add_compile_definitions(DEBUG_ENABLED=1)
-      add_compile_options(
-        -O0                       # no optimization for easier debugging
-        -g                        # include debug symbols
-        -fno-inline               # disable inlining for easier debugging
-        -fno-omit-frame-pointer   # keep frame pointer for stack traces
-      )
-    else()
-      # Release-specific compiler optimizations
-      add_compile_options(
-        -O3                           # maximum optimization
-        -flto                         # link-time optimization
-        -ffast-math                   # aggressive floating-point optimizations
-        
-        # WASM specific performance flags
-        -msimd128                     # enable WASM SIMD instructions
-        -mbulk-memory                 # enable bulk memory operations
-        -mmultivalue                  # enable multivalue returns
-        -msign-ext                    # enable sign extension operators
-        -mnontrapping-fptoint         # speed up float-to-int conversions
-        
-        # Inlining and unrolling, only clang-compatible
-        -finline-functions            # inline functions aggressively
-        -funroll-loops                # unroll loops for speed
-        -fvectorize                   # auto-vectorization
-        -fslp-vectorize               # superword-level parallelism vectorization
-        
-        # Memory and code generation
-        -fomit-frame-pointer          # free up register
-        -fstrict-aliasing             # assume strict aliasing rules
-        
-        # Clang-specific optimizations
-        -fdata-sections               # place data in separate sections
-        -ffunction-sections           # place functions in separate sections
-        -fmerge-all-constants         # merge identical constants
-      )
+    # Add a DEBUG_ENABLED definition for debug builds
+    add_compile_definitions($<$<CONFIG:Debug>:DEBUG_ENABLED=1>)
 
-      # Release-specific linker optimizations
-      add_link_options(
-        -O3                             # optimize for speed
-        -flto                           # link-time optimization       
-        -Wl,-O3,--lto-O3,--lto-CGO3     # link-time optimization level 3
-        -Wl,--strip-debug               # remove debug symbols
-        -Wl,--gc-sections               # remove unused sections
-        -Wl,--initial-memory=67108864   # initial memory size (64MB)
-        -Wl,-z,stack-size=2097152       # stack size (2MB)
-      )
+    # Build type specific compiler and linker optimization flags
+    add_compile_options(
+      $<$<CONFIG:Debug>:-O0>
+      $<$<CONFIG:Debug>:-g>
+      $<$<CONFIG:Debug>:-fno-inline>
+      $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
+      $<$<CONFIG:Release>:-O3>
+      $<$<CONFIG:Release>:-flto>
+      $<$<CONFIG:Release>:-ffast-math>
+      $<$<CONFIG:Release>:-msimd128>
+      $<$<CONFIG:Release>:-mbulk-memory>
+      $<$<CONFIG:Release>:-mmultivalue>
+      $<$<CONFIG:Release>:-msign-ext>
+      $<$<CONFIG:Release>:-mnontrapping-fptoint>
+      $<$<CONFIG:Release>:-finline-functions>
+      $<$<CONFIG:Release>:-funroll-loops>
+      $<$<CONFIG:Release>:-fvectorize>
+      $<$<CONFIG:Release>:-fslp-vectorize>
+      $<$<CONFIG:Release>:-fomit-frame-pointer>
+      $<$<CONFIG:Release>:-fstrict-aliasing>
+      $<$<CONFIG:Release>:-fdata-sections>
+      $<$<CONFIG:Release>:-ffunction-sections>
+      $<$<CONFIG:Release>:-fmerge-all-constants>
+    )
 
-      # Enable interprocedural optimization
-      set_property(GLOBAL PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-    endif()
-    
-    
+    # Linker options for release builds
+    add_link_options(
+      $<$<CONFIG:Release>:-O3>
+      $<$<CONFIG:Release>:-flto>
+      $<$<CONFIG:Release>:-Wl,-O3,--lto-O3,--lto-CGO3>
+      $<$<CONFIG:Release>:-Wl,-s,--strip-all,--strip-debug>
+      $<$<CONFIG:Release>:-Wl,--gc-sections>
+      $<$<CONFIG:Release>:-Wl,--initial-memory=67108864>
+      $<$<CONFIG:Release>:-Wl,-z,stack-size=2097152>
+    )
+
+    # Enable IPO/LTO for release builds
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
+
     # Project compiler flags
     add_compile_options(
       $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>
