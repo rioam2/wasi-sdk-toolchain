@@ -34,6 +34,7 @@ initialize_wasi_toolchain(
   WASI_SDK_TAG "wasi-sdk-29" // Upstream version of wasi-sdk toolchain
   TARGET_TRIPLET "wasm32" // Can be set to any of the wasi target triplets supported by wasi-sdk
   ENABLE_EXPERIMENTAL_STUBS OFF // Turn on experimental stubs for unsupported libc functionality
+  ENABLE_EXPERIMENTAL_SETJMP OFF // Turn on experimental setjmp/longjmp functionality
 )
 ```
 

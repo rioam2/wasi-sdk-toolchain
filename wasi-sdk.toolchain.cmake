@@ -10,7 +10,7 @@ function(initialize_wasi_toolchain)
     cmake_parse_arguments(
         PARSE_ARGV 0 "arg"
         ""
-        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET;ENABLE_EXPERIMENTAL_STUBS"
+        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET;ENABLE_EXPERIMENTAL_STUBS;ENABLE_EXPERIMENTAL_SETJMP"
         ""
     )
     if (DEFINED arg_UNPARSED_ARGUMENTS)
@@ -103,6 +103,14 @@ function(initialize_wasi_toolchain)
       add_link_options(${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH})
     endif()
 
+    if (arg_ENABLE_EXPERIMENTAL_SETJMP)
+      # Enable SJLJ support
+      add_compile_options(-mllvm -wasm-enable-sjlj -fwasm-exceptions)
+      add_link_options(-mllvm -wasm-enable-sjlj -lsetjmp -lunwind -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false)
+    else()
+      add_compile_options(-fignore-exceptions)
+    endif()
+
     # Add a DEBUG_ENABLED definition for debug builds
     add_compile_definitions($<$<CONFIG:Debug>:DEBUG_ENABLED=1>)
 
@@ -148,7 +156,6 @@ function(initialize_wasi_toolchain)
     # Project compiler flags
     add_compile_options(
       $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>
-      -fignore-exceptions
       -D_WASI_EMULATED_SIGNAL
       -D_WASI_EMULATED_PROCESS_CLOCKS
       -D_WASI_EMULATED_MMAN
