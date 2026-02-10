@@ -5,6 +5,10 @@
 #include_next <cxxabi.h>
 #endif
 
+#if __has_include_next(<stdlib.h>)
+#include_next <stdlib.h>
+#endif
+
 extern "C" {
 
 void* __cxa_allocate_exception(size_t);

@@ -10,7 +10,7 @@ function(initialize_wasi_toolchain)
     cmake_parse_arguments(
         PARSE_ARGV 0 "arg"
         ""
-        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET;ENABLE_EXPERIMENTAL_STUBS"
+        "WIT_BINDGEN_TAG;WASMTIME_TAG;WASM_TOOLS_TAG;WASI_SDK_TAG;TARGET_TRIPLET;ENABLE_EXPERIMENTAL_STUBS;ENABLE_EXPERIMENTAL_SETJMP"
         ""
     )
     if (DEFINED arg_UNPARSED_ARGUMENTS)
@@ -100,17 +100,62 @@ function(initialize_wasi_toolchain)
       # Include libc-stubs static library for linking
       set(LIBC_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libc-stubs.a" CACHE FILEPATH "Path to libc stubs")
       set(LIBCXX_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libcxx-stubs.a" CACHE FILEPATH "Path to libcxx stubs")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_LINKER_FLAGS} ${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH}" PARENT_SCOPE)
+      add_link_options(${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH})
     endif()
 
-    # Release-specific compiler and linker flags because CMake does not automatically include them
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3" PARENT_SCOPE)
-    add_link_options($<$<CONFIG:Release>:-Wl,--strip-debug,--lto-O2,--lto-CGO3,-O3>)
+    if (arg_ENABLE_EXPERIMENTAL_SETJMP)
+      # Enable SJLJ support
+      add_compile_options(-mllvm -wasm-enable-sjlj -fwasm-exceptions)
+      add_link_options(-mllvm -wasm-enable-sjlj -lsetjmp -lunwind -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false)
+    else()
+      add_compile_options(-fignore-exceptions)
+    endif()
+
+    # Add a DEBUG_ENABLED definition for debug builds
+    add_compile_definitions($<$<CONFIG:Debug>:DEBUG_ENABLED=1>)
+
+    # Build type specific compiler and linker optimization flags
+    add_compile_options(
+      $<$<CONFIG:Debug>:-O0>
+      $<$<CONFIG:Debug>:-g>
+      $<$<CONFIG:Debug>:-fno-inline>
+      $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
+      $<$<CONFIG:Release>:-O3>
+      $<$<CONFIG:Release>:-flto>
+      $<$<CONFIG:Release>:-ffast-math>
+      $<$<CONFIG:Release>:-msimd128>
+      $<$<CONFIG:Release>:-mbulk-memory>
+      $<$<CONFIG:Release>:-mmultivalue>
+      $<$<CONFIG:Release>:-msign-ext>
+      $<$<CONFIG:Release>:-mnontrapping-fptoint>
+      $<$<CONFIG:Release>:-finline-functions>
+      $<$<CONFIG:Release>:-funroll-loops>
+      $<$<CONFIG:Release>:-fvectorize>
+      $<$<CONFIG:Release>:-fslp-vectorize>
+      $<$<CONFIG:Release>:-fomit-frame-pointer>
+      $<$<CONFIG:Release>:-fstrict-aliasing>
+      $<$<CONFIG:Release>:-fdata-sections>
+      $<$<CONFIG:Release>:-ffunction-sections>
+      $<$<CONFIG:Release>:-fmerge-all-constants>
+    )
+
+    # Linker options for release builds
+    add_link_options(
+      $<$<CONFIG:Release>:-O3>
+      $<$<CONFIG:Release>:-flto>
+      $<$<CONFIG:Release>:-Wl,-O3,--lto-O3,--lto-CGO3>
+      $<$<CONFIG:Release>:-Wl,-s,--strip-all,--strip-debug>
+      $<$<CONFIG:Release>:-Wl,--gc-sections>
+      $<$<CONFIG:Release>:-Wl,--initial-memory=67108864>
+      $<$<CONFIG:Release>:-Wl,-z,stack-size=2097152>
+    )
+
+    # Enable IPO/LTO for release builds
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
     
     # Project compiler flags
     add_compile_options(
-      -stdlib=libc++
-      -fignore-exceptions
+      $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>
       -D_WASI_EMULATED_SIGNAL
       -D_WASI_EMULATED_PROCESS_CLOCKS
       -D_WASI_EMULATED_MMAN
