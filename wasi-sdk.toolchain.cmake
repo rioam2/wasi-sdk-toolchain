@@ -106,7 +106,7 @@ function(initialize_wasi_toolchain)
     if (arg_ENABLE_EXPERIMENTAL_SETJMP)
       # Enable SJLJ support
       add_compile_options(-mllvm -wasm-enable-sjlj -fwasm-exceptions)
-      add_link_options(-mllvm -wasm-enable-sjlj -lsetjmp -lunwind -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false)
+      add_link_options(-mllvm -wasm-enable-sjlj -lsetjmp -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false)
     else()
       add_compile_options(-fignore-exceptions)
     endif()
