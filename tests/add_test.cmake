@@ -19,6 +19,7 @@ function(add_test test_name test_file)
     string(LENGTH "${TEST_RUN_MESSAGE}" LEN)
     string(REPEAT "=" ${LEN} SEPARATOR)
 
+    message(STATUS "")
     message(STATUS "${SEPARATOR}")
     message(STATUS "${TEST_RUN_MESSAGE}")
     message(STATUS "${SEPARATOR}")
