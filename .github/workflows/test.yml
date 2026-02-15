@@ -43,3 +43,16 @@ jobs:
         run: |
           WASI_SDK_TOOLCHAIN_FILE="${{ github.workspace }}/wasi-sdk.toolchain.cmake" \
             cmake -B ./build -DCMAKE_TOOLCHAIN_FILE=./toolchain.cmake
+
+  status-report:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report status
+        run: |
+          if [[ "${{ needs.test.result }}" == "success" ]]; then
+            echo "All tests passed!"
+          else
+            echo "Some tests failed. Please check the logs for details."
+            exit 1
+          fi
