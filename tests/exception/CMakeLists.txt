@@ -1,4 +1,4 @@
-set(TEST_NAME "exceptions")
+set(TEST_NAME "exception")
 
 include(../add_test.cmake)
 
