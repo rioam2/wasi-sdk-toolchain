@@ -87,6 +87,9 @@ function(initialize_wasi_toolchain)
     set(CLANG_DEFAULT_RTLIB "compiler-rt" PARENT_SCOPE)
     set(LIBCXX_USE_COMPILER_RT "YES" PARENT_SCOPE)
     set(LIBCXXABI_USE_COMPILER_RT "YES" PARENT_SCOPE)
+
+    # Set cross-compiling emulators for test executions
+    set(CMAKE_CROSSCOMPILING_EMULATOR "wasmtime;run;--dir;/" PARENT_SCOPE)
     
     # Add include directory from the toolchain - provides helper headers from the SDK
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include'" PARENT_SCOPE)
