@@ -1,9 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+
 set(TEST_NAME "smoke_test")
 
 include(../add_tryrun_test.cmake)
-
-cmake_minimum_required(VERSION 3.15)
-
 # Project information
 project(test_${TEST_NAME} VERSION 1.0.0 LANGUAGES CXX)
 
