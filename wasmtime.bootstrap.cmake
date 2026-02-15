@@ -22,7 +22,7 @@ function(wasmtime_bootstrap)
   cmake_parse_arguments(
     PARSE_ARGV 0 "arg"
     ""
-    "TAG;WASMTIME_BINARY_OUTPUT"
+    "TAG;WASMTIME_BINARY_OUTPUT;WASMTIME_POLYFILL_DIR_OUTPUT"
     ""
   )
   if (DEFINED arg_UNPARSED_ARGUMENTS)
@@ -115,6 +115,74 @@ function(wasmtime_bootstrap)
   # Set output variable with path to wasmtime binary
   set(${arg_WASMTIME_BINARY_OUTPUT}
       "${wasmtime_root}/${wasmtime_extract_dir}/${wasmtime_binary_name}"
+      PARENT_SCOPE
+  )
+
+  # Download WASI preview1 polyfill adapters
+  set(wasmtime_polyfill_dir "${wasmtime_root}/polyfills")
+  if (NOT EXISTS ${wasmtime_polyfill_dir})
+    file(MAKE_DIRECTORY ${wasmtime_polyfill_dir})
+  endif()
+
+  set(wasmtime_polyfill_proxy_name "wasi_snapshot_preview1.proxy.wasm")
+  set(wasmtime_polyfill_reactor_name "wasi_snapshot_preview1.reactor.wasm")
+  set(wasmtime_polyfill_command_name "wasi_snapshot_preview1.command.wasm")
+  set(wasmtime_polyfill_proxy_path "${wasmtime_polyfill_dir}/${wasmtime_polyfill_proxy_name}")
+  set(wasmtime_polyfill_reactor_path "${wasmtime_polyfill_dir}/${wasmtime_polyfill_reactor_name}")
+  set(wasmtime_polyfill_command_path "${wasmtime_polyfill_dir}/${wasmtime_polyfill_command_name}")
+
+  set(wasmtime_polyfill_proxy_url "${wasmtime_release_base_url}/${wasmtime_polyfill_proxy_name}")
+  set(wasmtime_polyfill_reactor_url "${wasmtime_release_base_url}/${wasmtime_polyfill_reactor_name}")
+  set(wasmtime_polyfill_command_url "${wasmtime_release_base_url}/${wasmtime_polyfill_command_name}")
+
+  # Download wasmtime proxy polyfill
+  if (NOT EXISTS ${wasmtime_polyfill_proxy_path})
+    message(STATUS "Downloading wasmtime wasm32-wasip1 proxy polyfill from ${wasmtime_polyfill_proxy_url}")
+    file(DOWNLOAD ${wasmtime_polyfill_proxy_url} ${wasmtime_polyfill_proxy_path} STATUS wasmtime_polyfill_proxy_dl_status)
+    list(GET wasmtime_polyfill_proxy_dl_status 0 wasmtime_polyfill_proxy_dl_failed)
+    if (wasmtime_polyfill_proxy_dl_failed)
+      file(REMOVE ${wasmtime_polyfill_proxy_path})
+      message(FATAL_ERROR "Download for wasmtime wasm32-wasip1 proxy polyfill failed.")
+    else()
+      message(STATUS "Successfully downloaded wasmtime wasm32-wasip1 proxy polyfill to ${wasmtime_polyfill_proxy_path}")
+    endif()
+  else()
+    message(STATUS "wasmtime wasm32-wasip1 proxy polyfill has already been downloaded and cached.")
+  endif()
+
+  # Download wasmtime reactor polyfill
+  if (NOT EXISTS ${wasmtime_polyfill_reactor_path})
+    message(STATUS "Downloading wasmtime wasm32-wasip1 reactor polyfill from ${wasmtime_polyfill_reactor_url}")
+    file(DOWNLOAD ${wasmtime_polyfill_reactor_url} ${wasmtime_polyfill_reactor_path} STATUS wasmtime_polyfill_reactor_dl_status)
+    list(GET wasmtime_polyfill_reactor_dl_status 0 wasmtime_polyfill_reactor_dl_failed)
+    if (wasmtime_polyfill_reactor_dl_failed)
+      file(REMOVE ${wasmtime_polyfill_reactor_path})
+      message(FATAL_ERROR "Download for wasmtime wasm32-wasip1 reactor polyfill failed.")
+    else()
+      message(STATUS "Successfully downloaded wasmtime wasm32-wasip1 reactor polyfill to ${wasmtime_polyfill_reactor_path}")
+    endif()
+  else()
+    message(STATUS "wasmtime wasm32-wasip1 reactor polyfill has already been downloaded and cached.")
+  endif()
+
+  # Download wasmtime command polyfill
+  if (NOT EXISTS ${wasmtime_polyfill_command_path})
+    message(STATUS "Downloading wasmtime wasm32-wasip1 command polyfill from ${wasmtime_polyfill_command_url}")
+    file(DOWNLOAD ${wasmtime_polyfill_command_url} ${wasmtime_polyfill_command_path} STATUS wasmtime_polyfill_command_dl_status)
+    list(GET wasmtime_polyfill_command_dl_status 0 wasmtime_polyfill_command_dl_failed)
+    if (wasmtime_polyfill_command_dl_failed)
+      file(REMOVE ${wasmtime_polyfill_command_path})
+      message(FATAL_ERROR "Download for wasmtime wasm32-wasip1 command polyfill failed.")
+    else()
+      message(STATUS "Successfully downloaded wasmtime wasm32-wasip1 command polyfill to ${wasmtime_polyfill_command_path}")
+    endif()
+  else()
+    message(STATUS "wasmtime wasm32-wasip1 command polyfill has already been downloaded and cached.")
+  endif()
+
+  # Set output variable with path to polyfill directory
+  set(${arg_WASMTIME_POLYFILL_DIR_OUTPUT}
+      "${wasmtime_polyfill_dir}"
       PARENT_SCOPE
   )
 endfunction()

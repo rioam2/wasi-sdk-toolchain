@@ -41,24 +41,23 @@ function(initialize_wasi_toolchain)
     )
     set(_wit_bindgen_binary "${_wit_bindgen_binary}" PARENT_SCOPE)
     
-    # Add wasm-tools utilities
-    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasm-tools.bootstrap.cmake)
-    wasm_tools_bootstrap(
-      WASMTIME_POLYFILL_TAG "${arg_WASMTIME_TAG}"
-      WASMTIME_POLYFILL_DIR_OUTPUT "_wasm_tools_polyfill_dir"
-      WASM_TOOLS_TAG "${arg_WASM_TOOLS_TAG}"
-      WASM_TOOLS_BINARY_OUTPUT "_wasm_tools_binary"
-    )
-    set(_wasm_tools_binary "${_wasm_tools_binary}" PARENT_SCOPE)
-    set(_wasm_tools_polyfill_dir "${_wasm_tools_polyfill_dir}" PARENT_SCOPE)
-    
-    # Add wasmtime runtime
+    # Add wasmtime runtime and polyfills
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasmtime.bootstrap.cmake)
     wasmtime_bootstrap(
       TAG "${arg_WASMTIME_TAG}"
       WASMTIME_BINARY_OUTPUT "_wasmtime_binary"
+      WASMTIME_POLYFILL_DIR_OUTPUT "_wasmtime_polyfill_dir"
     )
     set(_wasmtime_binary "${_wasmtime_binary}" PARENT_SCOPE)
+    set(_wasmtime_polyfill_dir "${_wasmtime_polyfill_dir}" PARENT_SCOPE)
+    
+    # Add wasm-tools utilities
+    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasm-tools.bootstrap.cmake)
+    wasm_tools_bootstrap(
+      WASM_TOOLS_TAG "${arg_WASM_TOOLS_TAG}"
+      WASM_TOOLS_BINARY_OUTPUT "_wasm_tools_binary"
+    )
+    set(_wasm_tools_binary "${_wasm_tools_binary}" PARENT_SCOPE)
     
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
     wasi_sdk_bootstrap(
