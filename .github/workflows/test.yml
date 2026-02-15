@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  discover-tests:
+    runs-on: ubuntu-latest
+    outputs:
+      tests: ${{ steps.find-tests.outputs.tests }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find test directories
+        id: find-tests
+        run: |
+          tests=$(find ./tests -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "tests=$tests" >> $GITHUB_OUTPUT
+
+  test:
+    needs: discover-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ${{ fromJson(needs.discover-tests.outputs.tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.25.x'
+
+      - name: Run test (${{ matrix.test }})
+        working-directory: ./tests/${{ matrix.test }}
+        run: |
+          WASI_SDK_TOOLCHAIN_FILE="${{ github.workspace }}/wasi-sdk.toolchain.cmake" \
+            cmake -B ./build -DCMAKE_TOOLCHAIN_FILE=./toolchain.cmake
