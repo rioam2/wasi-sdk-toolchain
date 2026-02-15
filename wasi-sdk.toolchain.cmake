@@ -52,6 +52,14 @@ function(initialize_wasi_toolchain)
     set(_wasm_tools_binary "${_wasm_tools_binary}" PARENT_SCOPE)
     set(_wasm_tools_polyfill_dir "${_wasm_tools_polyfill_dir}" PARENT_SCOPE)
     
+    # Add wasmtime runtime
+    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasmtime.bootstrap.cmake)
+    wasmtime_bootstrap(
+      TAG "${arg_WASMTIME_TAG}"
+      WASMTIME_BINARY_OUTPUT "_wasmtime_binary"
+    )
+    set(_wasmtime_binary "${_wasmtime_binary}" PARENT_SCOPE)
+    
     include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
     wasi_sdk_bootstrap(
       TAG "${arg_WASI_SDK_TAG}"
@@ -88,8 +96,8 @@ function(initialize_wasi_toolchain)
     set(LIBCXX_USE_COMPILER_RT "YES" PARENT_SCOPE)
     set(LIBCXXABI_USE_COMPILER_RT "YES" PARENT_SCOPE)
 
-    # Set cross-compiling emulators for test executions
-    set(CMAKE_CROSSCOMPILING_EMULATOR "wasmtime;run;--dir;/" PARENT_SCOPE)
+    # Set cross-compiling emulator for test executions using the downloaded wasmtime binary
+    set(CMAKE_CROSSCOMPILING_EMULATOR "${_wasmtime_binary};run;--dir;/" PARENT_SCOPE)
     
     # Add include directory from the toolchain - provides helper headers from the SDK
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include'" PARENT_SCOPE)
