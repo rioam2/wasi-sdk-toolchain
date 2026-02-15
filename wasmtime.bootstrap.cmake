@@ -103,7 +103,6 @@ function(wasmtime_bootstrap)
       RESULT_VARIABLE wasmtime_extract_result
       COMMAND ${CMAKE_COMMAND} -E tar xf ${wasmtime_archive_path}
       WORKING_DIRECTORY ${wasmtime_root}
-      RESULT_VARIABLE wasmtime_extract_result
     )
     if (NOT wasmtime_extract_result STREQUAL "0")
       message(FATAL_ERROR "Extraction of wasmtime archive failed with exit code ${wasmtime_extract_result}")
