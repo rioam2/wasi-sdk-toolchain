@@ -59,12 +59,23 @@ function(initialize_wasi_toolchain)
     )
     set(_wasm_tools_binary "${_wasm_tools_binary}" PARENT_SCOPE)
     
-    include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
-    wasi_sdk_bootstrap(
-      TAG "${arg_WASI_SDK_TAG}"
-      WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
-      WASI_SDK_BIN_OUTPUT WASI_SDK_BIN
-    )
+    if (arg_WASI_SDK_TAG MATCHES "wasi-sdk-30.0-cpp-exn")
+      include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk-exceptions.bootstrap.cmake)
+      wasi_sdk_exceptions_bootstrap(
+        TAG "${arg_WASI_SDK_TAG}"
+        WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
+        WASI_SDK_BIN_OUTPUT WASI_SDK_BIN
+      )
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwasm-exceptions -mllvm -wasm-use-legacy-eh=false -lunwind" PARENT_SCOPE)
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lunwind" PARENT_SCOPE)
+    else()
+      include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
+      wasi_sdk_bootstrap(
+        TAG "${arg_WASI_SDK_TAG}"
+        WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
+        WASI_SDK_BIN_OUTPUT WASI_SDK_BIN
+      )
+    endif()
 
     set(CMAKE_SYSROOT "${CMAKE_SYSROOT}" PARENT_SCOPE)
     
@@ -96,7 +107,7 @@ function(initialize_wasi_toolchain)
     set(LIBCXXABI_USE_COMPILER_RT "YES" PARENT_SCOPE)
 
     # Set cross-compiling emulator for test executions using the downloaded wasmtime binary
-    set(CMAKE_CROSSCOMPILING_EMULATOR "${_wasmtime_binary};run;--dir;/" PARENT_SCOPE)
+    set(CMAKE_CROSSCOMPILING_EMULATOR "${_wasmtime_binary};run;--dir;/;-Wexceptions" PARENT_SCOPE)
     
     # Add include directory from the toolchain - provides helper headers from the SDK
     include_directories(SYSTEM "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include")
