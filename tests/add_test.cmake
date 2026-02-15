@@ -26,10 +26,8 @@ function(add_test test_name test_file)
 
     # Use the results
     if("${COMPILE_RESULT_VAR}" STREQUAL "TRUE")
-        message(STATUS "Test program '${test_name}' compiled successfully.")
-        message(STATUS "Test program result: ${RUN_RESULT_VAR}")
         if("${RUN_RESULT_VAR}" STREQUAL "0")
-            message(STATUS "Test program '${test_name}' ran successfully with output: ${RUN_OUTPUT_VAR}")
+            message(STATUS "Test program '${test_name}' ran successfully with output: \n${RUN_OUTPUT_VAR}")
         else()
             message(SEND_ERROR "Test program '${test_name}' ran but returned exit code: ${RUN_RESULT_VAR}")
         endif()
