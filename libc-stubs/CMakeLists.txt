@@ -7,6 +7,8 @@ project(wasi-sdk-toolchain-libc-stubs VERSION 1.0.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Pure C stubs - implementations that don't require C++ features.
+# Headers already have extern "C" guards, so these can be linked from C++ code.
 add_library(c-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/fcntl.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/setjmp.c"
@@ -17,16 +19,11 @@ add_library(c-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/file.c"
 )
 
+# C++ specific stubs - implementations that require C++ features (cxxabi, etc.).
+# Links against c-stubs to include all C stubs as well.
 add_library(cxx-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/cxxabi.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/fcntl.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/setjmp.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/signal.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/thread.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/time.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/unistd.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/eventfd.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/file.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/mman.cpp"
 )
 
@@ -47,6 +44,9 @@ target_include_directories(c-stubs PUBLIC
 target_include_directories(cxx-stubs PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+# cxx-stubs links against c-stubs so C++ programs get all stubs
+target_link_libraries(cxx-stubs PUBLIC c-stubs)
 
 install(TARGETS c-stubs DESTINATION lib)
 install(TARGETS cxx-stubs DESTINATION lib)
