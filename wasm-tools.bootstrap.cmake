@@ -1,3 +1,6 @@
+include_guard(GLOBAL)
+cmake_minimum_required(VERSION 3.25)
+
 function(_wasm_tools_find_root wasm_tools_version out_wasm_tools_root)
     if (DEFINED ENV{WASM_TOOLS_INSTALLATION_ROOT})
         set(root "$ENV{WASM_TOOLS_INSTALLATION_ROOT}")
@@ -83,9 +86,13 @@ function(wasm_tools_bootstrap)
     if (NOT EXISTS "${wasm_tools_root}/wasm-tools-${wasm_tools_version}-${host_identifier}")
         message(STATUS "Extracting wasm-tools binary to ${wasm_tools_root}")
         execute_process(
+            RESULT_VARIABLE wasm_tools_extract_result
             COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasm_tools_tarball_path}
             WORKING_DIRECTORY ${wasm_tools_root}
         )
+        if (NOT wasm_tools_extract_result STREQUAL "0")
+            message(FATAL_ERROR "Extraction of wasm-tools archive failed...")
+        endif()
     endif()
 
     # Set location of wasm-tools

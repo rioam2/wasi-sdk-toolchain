@@ -99,8 +99,7 @@ function(initialize_wasi_toolchain)
     set(CMAKE_CROSSCOMPILING_EMULATOR "${_wasmtime_binary};run;--dir;/" PARENT_SCOPE)
     
     # Add include directory from the toolchain - provides helper headers from the SDK
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include'" PARENT_SCOPE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include'" PARENT_SCOPE)
+    include_directories(SYSTEM "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include")
     
     # Optionally add experimental stubs for libc functions
     if (arg_ENABLE_EXPERIMENTAL_STUBS)

@@ -1,7 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0
-# Bootstrap wasmtime binary from GitHub releases
-
 include_guard(GLOBAL)
+cmake_minimum_required(VERSION 3.25)
 
 function(_wasmtime_find_root wasmtime_version out_wasmtime_root)
   if (DEFINED ENV{WASMTIME_INSTALLATION_ROOT})

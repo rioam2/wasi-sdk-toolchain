@@ -1,3 +1,6 @@
+include_guard(GLOBAL)
+cmake_minimum_required(VERSION 3.25)
+
 function(_wit_bindgen_find_root wit_bindgen_version out_wit_bindgen_root)
     if (DEFINED ENV{WIT_BINDGEN_INSTALLATION_ROOT})
         set(root "$ENV{WIT_BINDGEN_INSTALLATION_ROOT}")
@@ -83,9 +86,13 @@ function(wit_bindgen_bootstrap)
     if (NOT EXISTS "${wit_bindgen_root}/wit-bindgen-${wit_bindgen_version}-${host_identifier}")
         message(STATUS "Extracting wit-bindgen binary to ${wit_bindgen_root}")
         execute_process(
+            RESULT_VARIABLE wit_bindgen_extract_result
             COMMAND ${CMAKE_COMMAND} -E tar xzf ${wit_bindgen_tarball_path}
             WORKING_DIRECTORY ${wit_bindgen_root}
         )
+        if (NOT wit_bindgen_extract_result STREQUAL "0")
+            message(FATAL_ERROR "Extraction of wit-bindgen archive failed...")
+        endif()
     endif()
 
     # Set location of wit-bindgen

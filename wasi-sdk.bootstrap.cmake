@@ -1,8 +1,11 @@
+include_guard(GLOBAL)
+cmake_minimum_required(VERSION 3.25)
+
 function(_wasi_sdk_find_root wasi_sdk_version out_wasi_sdk_root)
   if (DEFINED ENV{WASI_SDK_INSTALLATION_ROOT})
     set(root "$ENV{WASI_SDK_INSTALLATION_ROOT}")
   elseif(WIN32)
-    set(root "$ENV{LOCALAPPDATA}/wask-sdk/${wasi_sdk_version}/cache")
+    set(root "$ENV{LOCALAPPDATA}/wasi-sdk/${wasi_sdk_version}/cache")
   else()
     set(root "$ENV{HOME}/.cache/wasi-sdk/${wasi_sdk_version}")
   endif()
@@ -87,9 +90,13 @@ function(wasi_sdk_bootstrap)
   if (NOT EXISTS "${wasi_sdk_root}/wasi-sdk-${wasi_sdk_version}-${host_identifier}")
     message(STATUS "Extracting wasi-sdk toolchain to ${wasi_sdk_root}")
     execute_process(
+      RESULT_VARIABLE wasi_sdk_extract_result
       COMMAND ${CMAKE_COMMAND} -E tar xzf ${wasi_sdk_tarball_path}
       WORKING_DIRECTORY ${wasi_sdk_root}
     )
+    if (NOT wasi_sdk_extract_result STREQUAL "0")
+      message(FATAL_ERROR "Extraction of wasi-sdk archive failed...")
+    endif()
   endif()
 
   set(${arg_WASI_SYSROOT_OUTPUT}
