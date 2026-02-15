@@ -8,13 +8,16 @@ failed_tests=()
 
 for test_dir in */; do
     if [ -d "$test_dir" ]; then
-        pushd "$test_dir"
+        if ! pushd "$test_dir" > /dev/null; then
+            failed_tests+=("$test_dir")
+            continue
+        fi
         WASI_SDK_TOOLCHAIN_FILE="$script_dir/../wasi-sdk.toolchain.cmake" \
             cmake -B ./build -DCMAKE_TOOLCHAIN_FILE=./toolchain.cmake
         if [ $? -ne 0 ]; then
             failed_tests+=("$test_dir")
         fi
-        popd
+        popd > /dev/null
     fi
 done
 
