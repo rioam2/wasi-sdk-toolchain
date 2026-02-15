@@ -1,6 +1,6 @@
 set(TEST_NAME "setjmp")
 
-include(../add_test.cmake)
+include(../add_tryrun_test.cmake)
 
 cmake_minimum_required(VERSION 3.15)
 
@@ -11,4 +11,4 @@ project(test_${TEST_NAME} VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_test(${TEST_NAME} main.cpp)
+add_tryrun_test(${TEST_NAME} main.cpp)

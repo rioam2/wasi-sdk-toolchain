@@ -1,4 +1,4 @@
-function(add_test test_name test_file)
+function(add_tryrun_test test_name test_file)
     # Define variables to store the results
     set(RUN_RESULT_VAR "")
     set(RUN_OUTPUT_VAR "")
@@ -34,4 +34,4 @@ function(add_test test_name test_file)
     else()
         message(SEND_ERROR "Test program '${test_name}' failed to compile: ${COMPILE_OUTPUT_VAR}")
     endif()
-endfunction(add_test)
+endfunction(add_tryrun_test)
