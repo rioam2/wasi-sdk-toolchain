@@ -1,3 +1,8 @@
+# Important note: This bootstrap is specifically for the wasi-sdk C++ exceptions release
+# from a fork created by Alex Crichton at https://github.com/alexcrichton/wasi-sdk
+# This separate bootstrap file can be removed once the C++ exceptions support is 
+# merged upstream into the main wasi-sdk repository.
+
 include_guard(GLOBAL)
 cmake_minimum_required(VERSION 3.25)
 
