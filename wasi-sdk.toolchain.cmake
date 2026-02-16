@@ -66,8 +66,8 @@ function(initialize_wasi_toolchain)
         WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
         WASI_SDK_BIN_OUTPUT WASI_SDK_BIN
       )
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwasm-exceptions -mllvm -wasm-use-legacy-eh=false -lunwind" PARENT_SCOPE)
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lunwind" PARENT_SCOPE)
+      string(APPEND CMAKE_CXX_FLAGS " -fwasm-exceptions -mllvm -wasm-use-legacy-eh=false -Wl,-lunwind")
+      string(APPEND CMAKE_EXE_LINKER_FLAGS " -lunwind")
     else()
       include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
       wasi_sdk_bootstrap(
@@ -107,8 +107,8 @@ function(initialize_wasi_toolchain)
     set(LIBCXXABI_USE_COMPILER_RT "YES" PARENT_SCOPE)
 
     # Set cross-compiling emulator for test executions using the downloaded wasmtime binary
-    set(CMAKE_CROSSCOMPILING_EMULATOR "${_wasmtime_binary};run;--dir;/;-Wexceptions" PARENT_SCOPE)
-    
+    set(CMAKE_CROSSCOMPILING_EMULATOR "${_wasmtime_binary};run;--dir;/;-Wexceptions;-D;debug-info;-O;opt-level=0" PARENT_SCOPE)
+
     # Add include directory from the toolchain - provides helper headers from the SDK
     include_directories(SYSTEM "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include")
     
@@ -119,75 +119,47 @@ function(initialize_wasi_toolchain)
       # Include libc-stubs static library for linking
       set(LIBC_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libc-stubs.a" CACHE FILEPATH "Path to libc stubs")
       set(LIBCXX_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libcxx-stubs.a" CACHE FILEPATH "Path to libcxx stubs")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH}" PARENT_SCOPE)
+      string(APPEND CMAKE_EXE_LINKER_FLAGS " ${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH}")
     endif()
 
     if (arg_ENABLE_EXPERIMENTAL_SETJMP)
       # Enable SJLJ support
-      add_compile_options(-mllvm -wasm-enable-sjlj)
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lsetjmp -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false" PARENT_SCOPE)
-    else()
-      add_compile_options(-fignore-exceptions)
+      string(APPEND CMAKE_C_FLAGS " -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false -Wl,-lsetjmp")
+      string(APPEND CMAKE_CXX_FLAGS " -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false -Wl,-lsetjmp")
+      string(APPEND CMAKE_EXE_LINKER_FLAGS " -lsetjmp")
     endif()
 
     # Add a DEBUG_ENABLED definition for debug builds
     add_compile_definitions($<$<CONFIG:Debug>:DEBUG_ENABLED=1>)
 
     # Build type specific compiler and linker optimization flags
-    add_compile_options(
-      $<$<CONFIG:Debug>:-O0>
-      $<$<CONFIG:Debug>:-g>
-      $<$<CONFIG:Debug>:-fno-inline>
-      $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
-      $<$<CONFIG:Release>:-O3>
-      $<$<CONFIG:Release>:-flto>
-      $<$<CONFIG:Release>:-ffast-math>
-      $<$<CONFIG:Release>:-msimd128>
-      $<$<CONFIG:Release>:-mbulk-memory>
-      $<$<CONFIG:Release>:-mmultivalue>
-      $<$<CONFIG:Release>:-msign-ext>
-      $<$<CONFIG:Release>:-mnontrapping-fptoint>
-      $<$<CONFIG:Release>:-finline-functions>
-      $<$<CONFIG:Release>:-funroll-loops>
-      $<$<CONFIG:Release>:-fvectorize>
-      $<$<CONFIG:Release>:-fslp-vectorize>
-      $<$<CONFIG:Release>:-fomit-frame-pointer>
-      $<$<CONFIG:Release>:-fstrict-aliasing>
-      $<$<CONFIG:Release>:-fdata-sections>
-      $<$<CONFIG:Release>:-ffunction-sections>
-      $<$<CONFIG:Release>:-fmerge-all-constants>
-    )
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+      # Compiler options for release builds
+      set(common_release_opt_compiler_flags "-O3 -flto -ffast-math -msimd128 -mbulk-memory -mmultivalue -msign-ext -mnontrapping-fptoint -finline-functions -funroll-loops -fvectorize -fslp-vectorize -fomit-frame-pointer -fstrict-aliasing -fdata-sections -ffunction-sections -fmerge-all-constants")
+      string(APPEND CMAKE_C_FLAGS_RELEASE " ${common_release_opt_compiler_flags}")
+      string(APPEND CMAKE_CXX_FLAGS_RELEASE " ${common_release_opt_compiler_flags}")
 
-    # Linker options for release builds
-    add_link_options(
-      $<$<CONFIG:Release>:-O3>
-      $<$<CONFIG:Release>:-flto>
-      $<$<CONFIG:Release>:-Wl,-O3,--lto-O3,--lto-CGO3>
-      $<$<CONFIG:Release>:-Wl,-s,--strip-all,--strip-debug>
-      $<$<CONFIG:Release>:-Wl,--gc-sections>
-      $<$<CONFIG:Release>:-Wl,--initial-memory=67108864>
-      $<$<CONFIG:Release>:-Wl,-z,stack-size=2097152>
-    )
+      # Linker options for release builds
+      set(common_release_opt_linker_flags "-O3 -flto -Wl,-O3,--lto-O3,--lto-CGO3 -Wl,-s,--strip-all,--strip-debug -Wl,--gc-sections -Wl,--initial-memory=67108864 -Wl,-z,stack-size=2097152")
+      string(APPEND CMAKE_EXE_LINKER_FLAGS_RELEASE " ${common_release_opt_linker_flags}")
 
-    # Enable IPO/LTO for release builds
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
+      # Enable IPO/LTO for release builds
+      set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
+    endif()
     
-    # Project compiler flags
-    add_compile_options(
-      $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>
-      -D_WASI_EMULATED_SIGNAL
-      -D_WASI_EMULATED_PROCESS_CLOCKS
-      -D_WASI_EMULATED_MMAN
-      -D_WASI_EMULATED_GETPID
-    )
-    
-    # Project linker flags
-    add_link_options(
-      -lwasi-emulated-signal
-      -lwasi-emulated-mman
-      -lwasi-emulated-process-clocks
-      -lwasi-emulated-getpid
-    )
+    # Emulated libc functions that require additional support from the toolchain
+    set(common_emulated_compiler_flags "-D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_GETPID")
+    string(APPEND CMAKE_CXX_FLAGS " -stdlib=libc++ ${common_emulated_compiler_flags}")
+    string(APPEND CMAKE_C_FLAGS " ${common_emulated_compiler_flags}")
+    string(APPEND CMAKE_EXE_LINKER_FLAGS " -lwasi-emulated-signal -lwasi-emulated-mman -lwasi-emulated-process-clocks -lwasi-emulated-getpid")
+
+    # Export accumulated flags to parent scope
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}" PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}" PARENT_SCOPE)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}" PARENT_SCOPE)
     
     # Interface library to enable reactor model WebAssembly files
     add_library(wasi_sdk_reactor_module INTERFACE)

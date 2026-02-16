@@ -3,6 +3,8 @@
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$script_dir"
 
+workspace_dir="$(cd "$script_dir/.." && pwd)"
+
 # Array to track failed tests
 failed_tests=()
 
@@ -12,8 +14,7 @@ for test_dir in */; do
             failed_tests+=("$test_dir")
             continue
         fi
-        WASI_SDK_TOOLCHAIN_FILE="$script_dir/../wasi-sdk.toolchain.cmake" \
-            cmake -B ./build -DCMAKE_TOOLCHAIN_FILE=./toolchain.cmake
+        cmake -B ./build -DCMAKE_TOOLCHAIN_FILE=./toolchain.cmake
         if [ $? -ne 0 ]; then
             failed_tests+=("$test_dir")
         fi
