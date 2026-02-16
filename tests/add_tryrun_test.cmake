@@ -27,6 +27,8 @@ function(add_tryrun_test test_name test_file)
     # Use the results
     if("${COMPILE_RESULT_VAR}" STREQUAL "TRUE")
         if("${RUN_RESULT_VAR}" STREQUAL "0")
+            message(STATUS "Compiler output:")
+            message(STATUS "${COMPILE_OUTPUT_VAR}")
             message(STATUS "Test program '${test_name}' ran successfully with output: \n${RUN_OUTPUT_VAR}")
         else()
             message(STATUS "Compiler output:")
