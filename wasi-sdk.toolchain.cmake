@@ -66,7 +66,7 @@ function(initialize_wasi_toolchain)
         WASI_SYSROOT_OUTPUT CMAKE_SYSROOT
         WASI_SDK_BIN_OUTPUT WASI_SDK_BIN
       )
-      string(APPEND CMAKE_CXX_FLAGS " -fwasm-exceptions -mllvm -wasm-use-legacy-eh=false -lunwind")
+      string(APPEND CMAKE_CXX_FLAGS " -fwasm-exceptions -mllvm -wasm-use-legacy-eh=false -Wl,-lunwind")
       string(APPEND CMAKE_EXE_LINKER_FLAGS " -lunwind")
     else()
       include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/wasi-sdk.bootstrap.cmake)
@@ -124,9 +124,9 @@ function(initialize_wasi_toolchain)
 
     if (arg_ENABLE_EXPERIMENTAL_SETJMP)
       # Enable SJLJ support
-      string(APPEND CMAKE_C_FLAGS " -mllvm -wasm-enable-sjlj -lsetjmp -lunwind -mllvm -wasm-use-legacy-eh=false")
-      string(APPEND CMAKE_CXX_FLAGS " -mllvm -wasm-enable-sjlj -lsetjmp -lunwind -mllvm -wasm-use-legacy-eh=false")
-      string(APPEND CMAKE_EXE_LINKER_FLAGS " -lsetjmp -lunwind -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false")
+      string(APPEND CMAKE_C_FLAGS " -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false -Wl,-lsetjmp")
+      string(APPEND CMAKE_CXX_FLAGS " -mllvm -wasm-enable-sjlj -mllvm -wasm-use-legacy-eh=false -Wl,-lsetjmp")
+      string(APPEND CMAKE_EXE_LINKER_FLAGS " -lsetjmp")
     endif()
 
     # Add a DEBUG_ENABLED definition for debug builds
