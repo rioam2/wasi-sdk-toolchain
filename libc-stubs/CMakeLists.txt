@@ -19,10 +19,9 @@ add_library(c-stubs STATIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/file.c"
 )
 
-# C++ specific stubs - implementations that require C++ features (cxxabi, etc.).
+# C++ specific stubs - implementations that require C++ features.
 # Links against c-stubs to include all C stubs as well.
 add_library(cxx-stubs STATIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/cxxabi.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/thread.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/sys/mman.cpp"
 )
