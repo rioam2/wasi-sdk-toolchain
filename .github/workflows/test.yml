@@ -41,7 +41,6 @@ jobs:
       - name: Run test (${{ matrix.test }})
         working-directory: ./tests/${{ matrix.test }}
         run: |
-          WASI_SDK_TOOLCHAIN_FILE="${{ github.workspace }}/wasi-sdk.toolchain.cmake" \
             cmake -B ./build -DCMAKE_TOOLCHAIN_FILE=./toolchain.cmake
 
   status-report:

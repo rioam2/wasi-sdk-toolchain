@@ -1,5 +1,5 @@
 # Source toolchain file(s)
-include("$ENV{WASI_SDK_TOOLCHAIN_FILE}")
+include("${CMAKE_CURRENT_LIST_DIR}/../../wasi-sdk.toolchain.cmake")
 
 # Initialize a specific version of the WASI toolchain
 initialize_wasi_toolchain(
