@@ -8,4 +8,6 @@ initialize_wasi_toolchain(
   WASM_TOOLS_TAG "v1.245.1"
   WASI_SDK_TAG "wasi-sdk-30.0-cpp-exn"
   TARGET_TRIPLET "wasm32-wasi"
+  ENABLE_EXPERIMENTAL_STUBS ON
+  ENABLE_EXPERIMENTAL_SETJMP ON
 )

@@ -115,18 +115,17 @@ function(initialize_wasi_toolchain)
     # Optionally add experimental stubs for libc functions
     if (arg_ENABLE_EXPERIMENTAL_STUBS)
       # Add libc-stubs include directories
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include' -I'${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include'" PARENT_SCOPE)
+      include_directories(SYSTEM "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/include" "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/include")
       # Include libc-stubs static library for linking
       set(LIBC_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libc-stubs.a" CACHE FILEPATH "Path to libc stubs")
       set(LIBCXX_STUBS_LIB_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/libc-stubs/install/lib/libcxx-stubs.a" CACHE FILEPATH "Path to libcxx stubs")
-      add_link_options(${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH})
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LIBCXX_STUBS_LIB_PATH} ${LIBC_STUBS_LIB_PATH}" PARENT_SCOPE)
     endif()
 
     if (arg_ENABLE_EXPERIMENTAL_SETJMP)
       # Enable SJLJ support
-      add_compile_options(-mllvm -wasm-enable-sjlj -fwasm-exceptions)
-      add_link_options(-mllvm -wasm-enable-sjlj -lsetjmp -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false)
+      add_compile_options(-mllvm -wasm-enable-sjlj)
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lsetjmp -Wl,-mllvm,-wasm-enable-sjlj,-mllvm,-wasm-use-legacy-eh=false" PARENT_SCOPE)
     else()
       add_compile_options(-fignore-exceptions)
     endif()
