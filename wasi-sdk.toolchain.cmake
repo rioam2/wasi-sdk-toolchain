@@ -136,12 +136,12 @@ function(initialize_wasi_toolchain)
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
       # Compiler options for release builds
       set(common_release_opt_compiler_flags "-O3 -flto -ffast-math -msimd128 -mbulk-memory -mmultivalue -msign-ext -mnontrapping-fptoint -finline-functions -funroll-loops -fvectorize -fslp-vectorize -fomit-frame-pointer -fstrict-aliasing -fdata-sections -ffunction-sections -fmerge-all-constants")
-      string(APPEND CMAKE_C_FLAGS " ${common_release_opt_compiler_flags}")
-      string(APPEND CMAKE_CXX_FLAGS " ${common_release_opt_compiler_flags}")
+      string(APPEND CMAKE_C_FLAGS_RELEASE " ${common_release_opt_compiler_flags}")
+      string(APPEND CMAKE_CXX_FLAGS_RELEASE " ${common_release_opt_compiler_flags}")
 
       # Linker options for release builds
       set(common_release_opt_linker_flags "-O3 -flto -Wl,-O3,--lto-O3,--lto-CGO3 -Wl,-s,--strip-all,--strip-debug -Wl,--gc-sections -Wl,--initial-memory=67108864 -Wl,-z,stack-size=2097152")
-      string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_release_opt_linker_flags}")
+      string(APPEND CMAKE_EXE_LINKER_FLAGS_RELEASE " ${common_release_opt_linker_flags}")
 
       # Enable IPO/LTO for release builds
       set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE PARENT_SCOPE)
@@ -155,8 +155,11 @@ function(initialize_wasi_toolchain)
 
     # Export accumulated flags to parent scope
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}" PARENT_SCOPE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}" PARENT_SCOPE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}" PARENT_SCOPE)
     
     # Interface library to enable reactor model WebAssembly files
     add_library(wasi_sdk_reactor_module INTERFACE)
