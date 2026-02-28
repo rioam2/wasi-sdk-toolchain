@@ -12,3 +12,4 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_tryrun_test(${TEST_NAME} main.cpp)
+add_tryrun_node_test(${TEST_NAME} main.cpp)
