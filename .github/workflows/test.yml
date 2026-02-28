@@ -46,6 +46,8 @@ jobs:
 
       - name: Run test (${{ matrix.test }})
         working-directory: ./tests/${{ matrix.test }}
+        env:
+          NODE_OPTIONS: ${{ matrix.node-version == 24 && '--experimental-wasm-exnref' || '' }}
         run: |
             cmake -B ./build -DCMAKE_TOOLCHAIN_FILE=./toolchain.cmake
 
