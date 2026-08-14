@@ -1,0 +1,12 @@
+#pragma once
+
+// Declares the WebAssembly module initialisation entry point. Link against
+// wasi::reactor to also pull in the exported `_start` shim and the linker flags
+// that produce a reactor rather than a command module.
+//
+// Background:
+// https://wasmcloud.com/blog/webassembly-patterns-command-reactor-library#the-reactor-pattern
+
+extern "C" {
+__attribute__((export_name("__wasm_call_ctors"))) void __wasm_call_ctors();
+}

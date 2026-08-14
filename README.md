@@ -1,72 +1,157 @@
 # wasi-sdk-toolchain
 
-A batteries-included CMake toolchain for cross-compiling C/C++ code to wasm32-wasi (WebAssembly/WASI). 
-Built on top of releases from https://github.com/WebAssembly/wasi-sdk
+A CMake toolchain for cross-compiling C/C++ to `wasm32-wasi*`, built on releases
+from [WebAssembly/wasi-sdk](https://github.com/WebAssembly/wasi-sdk).
+
+It is split into three pieces so a project can take only what it needs:
+
+| File                                 | Purpose                                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `wasi-sdk.toolchain.cmake`           | Describes the toolchain. No downloads, no targets, no directory state.     |
+| `wasi-sdk-bootstrap.toolchain.cmake` | The above, plus downloading a pinned SDK first.                            |
+| `cmake/WasiSdkExtras.cmake`          | Opt-in helper targets for reactor modules, exception stubs and libc stubs. |
 
 ## Getting started
 
-Add the following cmake file somewhere in your project. For this example, it is named `wasi-sdk.toolchain.cmake` in a `cmake/wasi-sdk` directory.
+### With an SDK you already have
+
+```sh
+cmake -B build \
+  -DCMAKE_TOOLCHAIN_FILE=/path/to/wasi-sdk.toolchain.cmake \
+  -DWASI_SDK_ROOT=/path/to/wasi-sdk-33.0-x86_64-linux
+```
+
+`WASI_SDK_ROOT` may also come from the `WASI_SDK_PATH` environment variable.
+
+### Letting the toolchain download one
+
+```sh
+cmake -B build \
+  -DCMAKE_TOOLCHAIN_FILE=/path/to/wasi-sdk-bootstrap.toolchain.cmake \
+  -DWASI_SDK_VERSION=33
+```
+
+The archive is verified against a checksum pinned in
+`cmake/WasiSdkChecksums.cmake` and unpacked into a shared cache
+(`$XDG_CACHE_HOME/wasi-sdk`, `~/.cache/wasi-sdk`, or `%LOCALAPPDATA%\wasi-sdk`;
+override with `WASI_SDK_CACHE_DIR`). Subsequent configures reuse it.
+
+Prefer the non-bootstrap toolchain when something else already manages the SDK,
+such as a package manager or a container image: a configure step that reaches
+the network cannot run offline or hermetically.
+
+To pre-populate the cache without configuring a project:
+
+```sh
+cmake -DVERSION=33 -P cmake/WasiSdkAcquire.cmake
+```
+
+### Vendoring the repository
 
 ```cmake
 include(FetchContent)
-
-# Fetch the WASI toolchain from Github
-set(FETCHCONTENT_FULLY_DISCONNECTED_OLD ${FETCHCONTENT_FULLY_DISCONNECTED})
-set(FETCHCONTENT_FULLY_DISCONNECTED OFF)
-FetchContent_Declare(
-  wasi_sdk_toolchain
-  SOURCE_DIR "${CMAKE_BINARY_DIR}/_deps/wasi-sdk"
+FetchContent_Declare(wasi_sdk_toolchain
   GIT_REPOSITORY https://github.com/rioam2/wasi-sdk-toolchain.git
-  GIT_TAG main
-)
+  GIT_TAG <commit>)
 FetchContent_MakeAvailable(wasi_sdk_toolchain)
-set(FETCHCONTENT_FULLY_DISCONNECTED ${FETCHCONTENT_FULLY_DISCONNECTED_OLD})
-
-# Source toolchain file(s)
-include("${wasi_sdk_toolchain_SOURCE_DIR}/wasi-sdk.toolchain.cmake")
-
-# Initialize a specific version of the WASI toolchain
-# These are example versions, set them as needed for your project
-initialize_wasi_toolchain(
-  WIT_BINDGEN_TAG "v0.29.0" // Version of wit-bindgen for component model c++ binding generation
-  WASMTIME_TAG "v23.0.1" // Version of wasmtime to use for wasi-v0.2->wasip1 polyfills
-  WASM_TOOLS_TAG "v1.215.0" // Version of wasm-tools to use for component creation
-  WASI_SDK_TAG "wasi-sdk-29" // Upstream version of wasi-sdk toolchain
-  TARGET_TRIPLET "wasm32-wasi" // Can be set to any of the wasi target triplets supported by wasi-sdk
-  ENABLE_EXPERIMENTAL_STUBS OFF // Turn on experimental stubs for unsupported libc functionality
-  ENABLE_EXPERIMENTAL_SETJMP OFF // Turn on experimental setjmp/longjmp functionality
-)
 ```
 
-`FETCHCONTENT_FULLY_DISCONNECTED` is forced to off to ensure that the toolchain is always fetched and loaded, regardless of your project's configuration. It is set back to it's original value after the toolchain is loaded.
+There is no `CMakeLists.txt` at the repository root, so this populates the
+sources without adding anything to your build.
 
-The tag in this example is set to `main`. This is configurable and can be set to any tag within this repository. It is recommended to use a specific tag version to prevent breaking changes affecting your project silently.
+## Options
 
-Finally, set this CMake cache variable:
+All options are plain CMake variables, settable with `-D` or by a wrapper
+toolchain that includes this one. Each is forwarded into `try_compile`, so
+compiler probes and `check_<lang>_source_compiles()` see the same flags as the
+real build.
 
-`cmake ... -DCMAKE_TOOLCHAIN_FILE=path/to/wasi-sdk.toolchain.cmake`
+| Variable                           | Default         | Meaning                                                                            |
+| ---------------------------------- | --------------- | ---------------------------------------------------------------------------------- |
+| `WASI_SDK_ROOT`                    | *(required)*    | Extracted wasi-sdk release.                                                        |
+| `WASI_SDK_TARGET_TRIPLE`           | `wasm32-wasip1` | Any triple the SDK's sysroot provides.                                             |
+| `WASI_SDK_EMULATED_FEATURES`       | *(none)*        | Any of `signal`, `mman`, `process-clocks`, `getpid`. Comma or semicolon separated. |
+| `WASI_SDK_EXCEPTIONS`              | `off`           | `off`, `wasm`, or `ignore`.                                                        |
+| `WASI_SDK_EXCEPTION_ENCODING`      | `standard`      | `standard` or `legacy`. Only applies when exception opcodes are emitted.           |
+| `WASI_SDK_SETJMP`                  | `OFF`           | Enable `setjmp`/`longjmp` via the SJLJ lowering.                                   |
+| `WASI_SDK_CXX_STDLIB`              | `libc++`        | Passed to `-stdlib=`; `default` leaves it to the compiler.                         |
+| `WASI_SDK_CROSSCOMPILING_EMULATOR` | *(none)*        | Sets `CMAKE_CROSSCOMPILING_EMULATOR` so `ctest` can run the output.                |
 
-## Using wit-bindgen to create a component
+### Exceptions
 
-The toolchain provides a helper function to generate WebAssembly Interface Type bindings (WIT-bindings) using wit-bindgen
+`WASI_SDK_EXCEPTIONS` has to be explicit because clang selects the sysroot's
+include *and* library directories from it:
+
+- `off` uses `-fno-exceptions` and the `noeh` multilib. `throw` and `try` become
+  compile errors. This is the wasi-sdk default configuration.
+- `wasm` uses `-fwasm-exceptions` and the `eh` multilib, and links `libunwind`.
+  Exceptions work.
+- `ignore` uses `-fignore-exceptions`, which keeps `try`/`catch` compiling for
+  unported code but leaves the exception ABI undefined. Link
+  `wasi::abort-exceptions` from the extras to supply symbols that abort.
+
+Building without any of these leaves libc++ emitting calls into an exception ABI
+that the selected multilib does not provide, which fails at link time.
+
+`WASI_SDK_EXCEPTION_ENCODING` exists because clang still defaults to the legacy
+exception opcode encoding, while runtimes have moved on — wasmtime removed
+`--wasm legacy-exceptions` in version 47. Run such modules with
+`wasmtime run -W exceptions=y`.
+
+### What this toolchain does not set
+
+Optimisation levels, LTO, `--gc-sections`, initial memory and stack size are
+project policy rather than properties of the target, so they are left to the
+consuming project. For a release build you probably want something like:
 
 ```cmake
-wit_bindgen(
-    INTERFACE_FILE_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/module.wit"
-    BINDINGS_DIR_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/bindings"
-    GENERATED_FILES_OUTPUT wit_codegen_output_files
-)
-
-# ...
-
-add_executable(<target> ${wit_codegen_output_files} ...)
-
-# Create a WebAssembly Component
-wasm_create_component(
-    COMPONENT_TARGET <name_of_wasm_component_target>
-    CORE_WASM_TARGET <target>
-    COMPONENT_TYPE "reactor"
-)
+add_compile_options($<$<CONFIG:Release>:-O3>)
+add_link_options($<$<CONFIG:Release>:-Wl,--gc-sections,--strip-debug>)
 ```
 
-This generates WIT bindings for the `.wit` file provided by `INTERFACE_FILE_INPUT`. The resulting bindings will be placed in the `BINDINGS_DIR_INPUT` directory. Additionally, a list of the generated files will be placed in a list variable given by `GENERATED_FILES_OUTPUT`. This list can be provided to a later call to `add_executable` as sources/headers to link with your executable.
+## Extras
+
+```cmake
+include(<toolchain-dir>/cmake/WasiSdkExtras.cmake)
+wasi_sdk_add_extras()
+
+target_link_libraries(my_module PRIVATE wasi::reactor)
+```
+
+| Target                   | Purpose                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `wasi::reactor`          | Reactor-style module: exports `_start`/`__wasm_call_ctors` and adds `-nostartfiles -Wl,--no-entry`. |
+| `wasi::abort-exceptions` | Defines `__cxa_throw`/`__cxa_allocate_exception` so they abort. For `WASI_SDK_EXCEPTIONS=ignore`.   |
+| `wasi::libc-stubs`       | Declarations and stub definitions for libc functionality wasi-libc lacks.                           |
+
+These are libraries rather than force-included headers so their definitions
+appear once per target instead of once per translation unit, and they are not
+declared by the toolchain so they can be exported and do not reappear in nested
+`project()` calls.
+
+`wasi::libc-stubs` headers shadow real wasi-libc ones, so they reach only the
+targets that link it. Everything it declares fails at runtime; see
+`extras/libc-stubs/README.md`.
+
+## Updating the pinned SDK list
+
+```sh
+GITHUB_TOKEN=$(gh auth token) cmake -P tools/update-checksums.cmake
+```
+
+This regenerates `cmake/WasiSdkChecksums.cmake` from the digests GitHub
+publishes for each release asset. Releases before wasi-sdk-26 have no digests
+and are skipped; pass `WASI_SDK_SHA256` to use one anyway.
+
+## Tests
+
+```sh
+cmake -S tests -B build -G Ninja
+ctest --test-dir build --output-on-failure
+```
+
+`ctest -L unit` covers the CMake logic without a network or a compiler.
+`ctest -L integration` downloads the SDK and compiles real WebAssembly, and also
+executes it when `wasmtime` is on `PATH`. Pass
+`-DWASI_SDK_TESTS_INTEGRATION=OFF` to skip the latter, or
+`-DWASI_SDK_TESTS_VERSION=<n>` to target a different release.
