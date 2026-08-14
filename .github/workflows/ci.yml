@@ -1,0 +1,122 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Hermetic: no SDK download, so this reports logic errors within seconds and
+  # covers the hosts we cannot run integration tests on.
+  unit:
+    name: unit (${{ matrix.os }}, cmake ${{ matrix.cmake }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-13, windows-2022]
+        cmake: ['3.31.x']
+        include:
+          # The oldest supported CMake, which uses the vendored Platform/WASI
+          # modules rather than the ones CMake ships from 3.31 onwards.
+          - os: ubuntu-24.04
+            cmake: '3.25.x'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: ${{ matrix.cmake }}
+
+      - name: Configure
+        run: cmake -S tests -B build -DWASI_SDK_TESTS_INTEGRATION=OFF
+
+      - name: Test
+        run: ctest --test-dir build -L unit --output-on-failure
+
+  integration:
+    name: integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-13]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Cache wasi-sdk
+        uses: actions/cache@v4
+        with:
+          # Keyed on the pinned checksums, so a version bump misses the cache
+          # and anything else reuses it.
+          path: ~/.cache/wasi-sdk
+          key: wasi-sdk-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('cmake/WasiSdkChecksums.cmake') }}
+
+      - name: Install wasmtime
+        uses: bytecodealliance/actions/wasmtime/setup@v1
+        with:
+          # Pinned rather than latest: the default exception encoding is chosen
+          # to match what runtimes accept, so a runtime bump is a deliberate
+          # change to verify, not something to discover on an unrelated PR.
+          version: "47.0.3"
+
+      - name: Configure
+        run: cmake -S tests -B build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # A newly published release must be pinnable, otherwise consumers cannot move
+  # off an old SDK without hand-editing checksums.
+  checksums-reproducible:
+    name: checksum table is up to date
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Regenerate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: cmake -P tools/update-checksums.cmake
+
+      - name: Report drift
+        run: |
+          if ! git diff --quiet -- cmake/WasiSdkChecksums.cmake; then
+            echo "::notice::A newer wasi-sdk release is available. Run 'cmake -P tools/update-checksums.cmake' to pin it."
+            git --no-pager diff --stat -- cmake/WasiSdkChecksums.cmake
+          fi
+          # Existing entries must never change; only new ones may appear.
+          if git --no-pager diff -- cmake/WasiSdkChecksums.cmake | grep -q '^-set('; then
+            echo "::error::A pinned checksum changed. This means a published release was altered."
+            git --no-pager diff -- cmake/WasiSdkChecksums.cmake
+            exit 1
+          fi
+
+  # The single check to require in branch protection. Matrix legs are added and
+  # removed over time; gating on this job means the rule never has to follow.
+  all-good:
+    name: all-good
+    runs-on: ubuntu-24.04
+    needs: [unit, integration, checksums-reproducible]
+    if: always()
+    steps:
+      - name: Verify every upstream job succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Upstream results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::A required job did not succeed."
+              exit 1
+            fi
+          done

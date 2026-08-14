@@ -1,0 +1,12 @@
+#pragma once
+
+// Link wasi::abort-exceptions to get definitions of the C++ exception ABI that
+// abort instead of unwinding.
+//
+// This is what makes WASI_SDK_EXCEPTIONS=ignore usable: try/catch keeps
+// compiling for unported code, but the sysroot multilib clang selects provides
+// no exception runtime, so the ABI entry points would otherwise be undefined.
+//
+// Including this header is optional; linking the library is what matters.
+
+#include <cxxabi.h>
