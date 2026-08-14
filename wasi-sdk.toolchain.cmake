@@ -139,6 +139,7 @@ set(_wasi_c_flags "")
 set(_wasi_cxx_flags "")
 set(_wasi_c_libs "")
 set(_wasi_cxx_libs "")
+set(_wasi_llvm_opts "")
 set(_wasi_uses_eh_opcodes FALSE)
 
 if(NOT DEFINED WASI_SDK_CXX_STDLIB OR WASI_SDK_CXX_STDLIB STREQUAL "")
@@ -194,8 +195,7 @@ else()
 endif()
 
 if(WASI_SDK_SETJMP)
-  string(APPEND _wasi_c_flags " -mllvm -wasm-enable-sjlj")
-  string(APPEND _wasi_cxx_flags " -mllvm -wasm-enable-sjlj")
+  string(APPEND _wasi_llvm_opts " -mllvm -wasm-enable-sjlj")
   string(APPEND _wasi_c_libs " -lsetjmp")
   string(APPEND _wasi_cxx_libs " -lsetjmp")
   set(_wasi_uses_eh_opcodes TRUE)
@@ -211,13 +211,20 @@ endif()
 string(TOLOWER "${WASI_SDK_EXCEPTION_ENCODING}" _wasi_encoding)
 if(_wasi_encoding STREQUAL "standard")
   if(_wasi_uses_eh_opcodes)
-    string(APPEND _wasi_c_flags " -mllvm -wasm-use-legacy-eh=false")
-    string(APPEND _wasi_cxx_flags " -mllvm -wasm-use-legacy-eh=false")
+    string(APPEND _wasi_llvm_opts " -mllvm -wasm-use-legacy-eh=false")
   endif()
 elseif(NOT _wasi_encoding STREQUAL "legacy")
   message(FATAL_ERROR
     "wasi-sdk: WASI_SDK_EXCEPTION_ENCODING must be 'legacy' or 'standard', "
     "got '${WASI_SDK_EXCEPTION_ENCODING}'")
+endif()
+
+# These reach the driver on link-only invocations too, where they are not used;
+# without the wrapper every link emits -Wunused-command-line-argument.
+if(NOT _wasi_llvm_opts STREQUAL "")
+  set(_wasi_llvm_opts " --start-no-unused-arguments${_wasi_llvm_opts} --end-no-unused-arguments")
+  string(APPEND _wasi_c_flags "${_wasi_llvm_opts}")
+  string(APPEND _wasi_cxx_flags "${_wasi_llvm_opts}")
 endif()
 
 if(DEFINED WASI_SDK_CROSSCOMPILING_EMULATOR AND NOT WASI_SDK_CROSSCOMPILING_EMULATOR STREQUAL "")
