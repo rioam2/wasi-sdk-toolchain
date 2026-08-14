@@ -139,8 +139,13 @@ set(_wasi_c_flags "")
 set(_wasi_cxx_flags "")
 set(_wasi_c_libs "")
 set(_wasi_cxx_libs "")
-set(_wasi_llvm_opts "")
-set(_wasi_uses_eh_opcodes FALSE)
+set(_wasi_llvm_opts_c "")
+set(_wasi_llvm_opts_cxx "")
+
+# Tracked per language: the backend rejects the encoding flag unless that same
+# language also enables exceptions or setjmp.
+set(_wasi_eh_opcodes_c FALSE)
+set(_wasi_eh_opcodes_cxx FALSE)
 
 if(NOT DEFINED WASI_SDK_CXX_STDLIB OR WASI_SDK_CXX_STDLIB STREQUAL "")
   set(WASI_SDK_CXX_STDLIB "libc++")
@@ -183,7 +188,7 @@ if(_wasi_exceptions STREQUAL "off")
 elseif(_wasi_exceptions STREQUAL "wasm")
   string(APPEND _wasi_cxx_flags " -fwasm-exceptions")
   string(APPEND _wasi_cxx_libs " -lunwind")
-  set(_wasi_uses_eh_opcodes TRUE)
+  set(_wasi_eh_opcodes_cxx TRUE)
 elseif(_wasi_exceptions STREQUAL "ignore")
   # Keeps try/catch compiling for unported code, but the exception ABI symbols
   # are left undefined; link wasi::abort-exceptions from the extras to supply
@@ -195,10 +200,12 @@ else()
 endif()
 
 if(WASI_SDK_SETJMP)
-  string(APPEND _wasi_llvm_opts " -mllvm -wasm-enable-sjlj")
+  string(APPEND _wasi_llvm_opts_c " -mllvm -wasm-enable-sjlj")
+  string(APPEND _wasi_llvm_opts_cxx " -mllvm -wasm-enable-sjlj")
   string(APPEND _wasi_c_libs " -lsetjmp")
   string(APPEND _wasi_cxx_libs " -lsetjmp")
-  set(_wasi_uses_eh_opcodes TRUE)
+  set(_wasi_eh_opcodes_c TRUE)
+  set(_wasi_eh_opcodes_cxx TRUE)
 endif()
 
 # Both wasm exceptions and the SJLJ lowering emit exception opcodes, which have
@@ -210,8 +217,11 @@ if(NOT DEFINED WASI_SDK_EXCEPTION_ENCODING OR WASI_SDK_EXCEPTION_ENCODING STREQU
 endif()
 string(TOLOWER "${WASI_SDK_EXCEPTION_ENCODING}" _wasi_encoding)
 if(_wasi_encoding STREQUAL "standard")
-  if(_wasi_uses_eh_opcodes)
-    string(APPEND _wasi_llvm_opts " -mllvm -wasm-use-legacy-eh=false")
+  if(_wasi_eh_opcodes_c)
+    string(APPEND _wasi_llvm_opts_c " -mllvm -wasm-use-legacy-eh=false")
+  endif()
+  if(_wasi_eh_opcodes_cxx)
+    string(APPEND _wasi_llvm_opts_cxx " -mllvm -wasm-use-legacy-eh=false")
   endif()
 elseif(NOT _wasi_encoding STREQUAL "legacy")
   message(FATAL_ERROR
@@ -221,10 +231,13 @@ endif()
 
 # These reach the driver on link-only invocations too, where they are not used;
 # without the wrapper every link emits -Wunused-command-line-argument.
-if(NOT _wasi_llvm_opts STREQUAL "")
-  set(_wasi_llvm_opts " --start-no-unused-arguments${_wasi_llvm_opts} --end-no-unused-arguments")
-  string(APPEND _wasi_c_flags "${_wasi_llvm_opts}")
-  string(APPEND _wasi_cxx_flags "${_wasi_llvm_opts}")
+if(NOT _wasi_llvm_opts_c STREQUAL "")
+  string(APPEND _wasi_c_flags
+    " --start-no-unused-arguments${_wasi_llvm_opts_c} --end-no-unused-arguments")
+endif()
+if(NOT _wasi_llvm_opts_cxx STREQUAL "")
+  string(APPEND _wasi_cxx_flags
+    " --start-no-unused-arguments${_wasi_llvm_opts_cxx} --end-no-unused-arguments")
 endif()
 
 if(DEFINED WASI_SDK_CROSSCOMPILING_EMULATOR AND NOT WASI_SDK_CROSSCOMPILING_EMULATOR STREQUAL "")
