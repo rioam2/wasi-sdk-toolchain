@@ -66,16 +66,18 @@ toolchain that includes this one. Each is forwarded into `try_compile`, so
 compiler probes and `check_<lang>_source_compiles()` see the same flags as the
 real build.
 
-| Variable                           | Default         | Meaning                                                                            |
-| ---------------------------------- | --------------- | ---------------------------------------------------------------------------------- |
-| `WASI_SDK_ROOT`                    | *(required)*    | Extracted wasi-sdk release.                                                        |
-| `WASI_SDK_TARGET_TRIPLE`           | `wasm32-wasip1` | Any triple the SDK's sysroot provides.                                             |
-| `WASI_SDK_EMULATED_FEATURES`       | *(none)*        | Any of `signal`, `mman`, `process-clocks`, `getpid`. Comma or semicolon separated. |
-| `WASI_SDK_EXCEPTIONS`              | `off`           | `off`, `wasm`, or `ignore`.                                                        |
-| `WASI_SDK_EXCEPTION_ENCODING`      | `standard`      | `standard` or `legacy`. Only applies when exception opcodes are emitted.           |
-| `WASI_SDK_SETJMP`                  | `OFF`           | Enable `setjmp`/`longjmp` via the SJLJ lowering.                                   |
-| `WASI_SDK_CXX_STDLIB`              | `libc++`        | Passed to `-stdlib=`; `default` leaves it to the compiler.                         |
-| `WASI_SDK_CROSSCOMPILING_EMULATOR` | *(none)*        | Sets `CMAKE_CROSSCOMPILING_EMULATOR` so `ctest` can run the output.                |
+| Variable                           | Default          | Meaning                                                                                   |
+| ---------------------------------- | ---------------- | ----------------------------------------------------------------------------------------- |
+| `WASI_SDK_ROOT`                    | *(required)*     | Extracted wasi-sdk release.                                                               |
+| `WASI_SDK_TARGET_TRIPLE`           | `wasm32-wasip1`  | Any triple the SDK's sysroot provides.                                                    |
+| `WASI_SDK_EMULATED_FEATURES`       | *(none)*         | Any of `signal`, `mman`, `process-clocks`, `getpid`. Comma or semicolon separated.        |
+| `WASI_SDK_EXCEPTIONS`              | `off`            | `off`, `wasm`, or `ignore`.                                                               |
+| `WASI_SDK_EXCEPTION_ENCODING`      | `standard`       | `standard` or `legacy`. Only applies when exception opcodes are emitted.                  |
+| `WASI_SDK_SETJMP`                  | `OFF`            | Enable `setjmp`/`longjmp` via the SJLJ lowering.                                          |
+| `WASI_SDK_CXX_STDLIB`              | `libc++`         | Passed to `-stdlib=`; `default` leaves it to the compiler.                                |
+| `WASI_SDK_LIBC_STUBS`              | `OFF`            | Add stub headers for libc functionality wasi-libc lacks to the global include path.       |
+| `WASI_SDK_LIBC_STUBS_DIR`          | *(shipped copy)* | Directory containing the stub headers; defaults to `extras/libc-stubs` next to this file. |
+| `WASI_SDK_CROSSCOMPILING_EMULATOR` | *(none)*         | Sets `CMAKE_CROSSCOMPILING_EMULATOR` so `ctest` can run the output.                       |
 
 ### Exceptions
 
@@ -97,6 +99,23 @@ that the selected multilib does not provide, which fails at link time.
 exception opcode encoding, while runtimes have moved on — wasmtime removed
 `--wasm legacy-exceptions` in version 47. Run such modules with
 `wasmtime run -W exceptions=y`.
+
+### Libc stubs
+
+`WASI_SDK_LIBC_STUBS=ON` appends the stub header directory to
+`CMAKE_C_STANDARD_INCLUDE_DIRECTORIES` and `CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES`,
+making the declarations visible to every translation unit in the build. This is
+intended for builds of third-party dependencies that reference POSIX APIs
+(e.g. `dup`, `flock`, `msync`) that wasi-libc does not declare and that cannot
+easily be patched to link `wasi::libc-stubs`.
+
+Because these headers shadow the real wasi-libc headers of the same name, the
+option is off by default. For code you control, prefer linking `wasi::libc-stubs`
+explicitly so the shadow is confined to those targets. Everything the stubs
+declare aborts at runtime; see `extras/libc-stubs/README.md`.
+
+Set `WASI_SDK_LIBC_STUBS_DIR` to point at a different directory when you want
+to supply your own stub headers instead of the copy shipped with this toolchain.
 
 ### What this toolchain does not set
 

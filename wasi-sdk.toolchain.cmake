@@ -22,6 +22,10 @@
 #                                     applies when exceptions or setjmp are on.
 #   WASI_SDK_CXX_STDLIB               Default "libc++"; "default" leaves the
 #                                     compiler default alone.
+#   WASI_SDK_LIBC_STUBS               Put declarations for libc functionality
+#                                     wasi-libc lacks on the include path.
+#   WASI_SDK_LIBC_STUBS_DIR           Where those headers live; defaults to the
+#                                     copy shipped next to this file.
 #   WASI_SDK_CROSSCOMPILING_EMULATOR  Command used to run test executables.
 #
 # Optimisation levels, LTO and memory layout are deliberately not set here;
@@ -244,6 +248,26 @@ if(DEFINED WASI_SDK_CROSSCOMPILING_EMULATOR AND NOT WASI_SDK_CROSSCOMPILING_EMUL
   set(CMAKE_CROSSCOMPILING_EMULATOR "${WASI_SDK_CROSSCOMPILING_EMULATOR}")
 endif()
 
+# Declarations for libc functionality wasi-libc does not provide. Unported code
+# needs these to compile at all, but they shadow real wasi-libc headers, so this
+# is off unless asked for. Symbols still have to come from wasi::libc-stubs.
+if(WASI_SDK_LIBC_STUBS)
+  if(NOT DEFINED WASI_SDK_LIBC_STUBS_DIR OR WASI_SDK_LIBC_STUBS_DIR STREQUAL "")
+    set(WASI_SDK_LIBC_STUBS_DIR "${CMAKE_CURRENT_LIST_DIR}/extras/libc-stubs")
+  endif()
+  if(NOT IS_DIRECTORY "${WASI_SDK_LIBC_STUBS_DIR}/include")
+    message(FATAL_ERROR
+      "wasi-sdk: WASI_SDK_LIBC_STUBS is on but no headers were found at\n"
+      "  ${WASI_SDK_LIBC_STUBS_DIR}/include\n"
+      "  Set WASI_SDK_LIBC_STUBS_DIR to where the stub headers live.")
+  endif()
+  foreach(lang IN ITEMS C CXX)
+    list(APPEND CMAKE_${lang}_STANDARD_INCLUDE_DIRECTORIES
+      "${WASI_SDK_LIBC_STUBS_DIR}/include")
+    list(REMOVE_DUPLICATES CMAKE_${lang}_STANDARD_INCLUDE_DIRECTORIES)
+  endforeach()
+endif()
+
 # _INIT variables seed the cache once, so guard against contributing twice when
 # a single configure reads this file for more than one project().
 if(NOT _WASI_SDK_FLAGS_APPLIED)
@@ -265,5 +289,7 @@ list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
   WASI_SDK_EXCEPTION_ENCODING
   WASI_SDK_SETJMP
   WASI_SDK_CXX_STDLIB
+  WASI_SDK_LIBC_STUBS
+  WASI_SDK_LIBC_STUBS_DIR
   WASI_SDK_CROSSCOMPILING_EMULATOR)
 list(REMOVE_DUPLICATES CMAKE_TRY_COMPILE_PLATFORM_VARIABLES)
