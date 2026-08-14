@@ -63,6 +63,7 @@ foreach(name IN ITEMS
     toolchain_exceptions
     toolchain_exceptions_ignore
     toolchain_exception_encoding
+    toolchain_eh_flags_per_language
     toolchain_setjmp
     toolchain_triple
     toolchain_emulator
@@ -170,7 +171,7 @@ add_build_test(NAME probe_parity DIR probe_parity
 
 add_build_test(NAME exceptions DIR exceptions
   ARGS "-DWASI_SDK_EXCEPTIONS=wasm"
-  EXPECT exceptions.wasm
+  EXPECT exceptions.wasm exceptions_c.wasm
   FORBID_OUTPUT "unused-command-line-argument")
 
 add_build_test(NAME setjmp DIR setjmp
