@@ -5,9 +5,18 @@ project(wasi_sdk_toolchain_tests NONE)
 # this repo in with FetchContent, which would try to build whatever sits at the
 # root. Configure this directory explicitly instead:
 #
-#   cmake -S tests -B build && ctest --test-dir build --output-on-failure
+#   cmake -S tests -B build -G Ninja && ctest --test-dir build --output-on-failure
 
 enable_testing()
+
+# Every test here is a script, so no configuration exists to select. Under a
+# multi-config generator ctest still gates them behind one and reports them as
+# "Not available without configuration" unless -C is passed.
+if(CMAKE_CONFIGURATION_TYPES)
+  message(WARNING
+    "multi-config generator (${CMAKE_GENERATOR}): ctest must be given "
+    "'-C Debug', or configure with -G Ninja instead.")
+endif()
 
 get_filename_component(REPO_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(PURE_TOOLCHAIN "${REPO_DIR}/wasi-sdk.toolchain.cmake")

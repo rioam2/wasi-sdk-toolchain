@@ -26,9 +26,13 @@ if(result EQUAL 0)
   message(FATAL_ERROR "expected ${SCRIPT} to fail, but it succeeded:\n${output}")
 endif()
 
+# CMake re-wraps diagnostics, so where a phrase breaks across lines depends on
+# how long the interpolated paths are. Match against a flattened copy.
+string(REGEX REPLACE "[ \t\r\n]+" " " flattened "${output}")
+
 string(REPLACE "|" ";" patterns "${EXPECT}")
 foreach(pattern IN LISTS patterns)
-  if(NOT output MATCHES "${pattern}")
+  if(NOT flattened MATCHES "${pattern}")
     message(FATAL_ERROR
       "diagnostic did not match '${pattern}'.\n"
       "--- actual output ---\n${output}")

@@ -146,7 +146,7 @@ and are skipped; pass `WASI_SDK_SHA256` to use one anyway.
 ## Tests
 
 ```sh
-cmake -S tests -B build
+cmake -S tests -B build -G Ninja
 ctest --test-dir build --output-on-failure
 ```
 
