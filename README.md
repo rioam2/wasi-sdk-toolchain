@@ -5,11 +5,11 @@ from [WebAssembly/wasi-sdk](https://github.com/WebAssembly/wasi-sdk).
 
 It is split into three pieces so a project can take only what it needs:
 
-| File | Purpose |
-| --- | --- |
-| `wasi-sdk.toolchain.cmake` | Describes the toolchain. No downloads, no targets, no directory state. |
-| `wasi-sdk-bootstrap.toolchain.cmake` | The above, plus downloading a pinned SDK first. |
-| `cmake/WasiSdkExtras.cmake` | Opt-in helper targets for reactor modules, exception stubs and libc stubs. |
+| File                                 | Purpose                                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `wasi-sdk.toolchain.cmake`           | Describes the toolchain. No downloads, no targets, no directory state.     |
+| `wasi-sdk-bootstrap.toolchain.cmake` | The above, plus downloading a pinned SDK first.                            |
+| `cmake/WasiSdkExtras.cmake`          | Opt-in helper targets for reactor modules, exception stubs and libc stubs. |
 
 ## Getting started
 
@@ -66,16 +66,16 @@ toolchain that includes this one. Each is forwarded into `try_compile`, so
 compiler probes and `check_<lang>_source_compiles()` see the same flags as the
 real build.
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `WASI_SDK_ROOT` | *(required)* | Extracted wasi-sdk release. |
-| `WASI_SDK_TARGET_TRIPLE` | `wasm32-wasip1` | Any triple the SDK's sysroot provides. |
-| `WASI_SDK_EMULATED_FEATURES` | *(none)* | Any of `signal`, `mman`, `process-clocks`, `getpid`. Comma or semicolon separated. |
-| `WASI_SDK_EXCEPTIONS` | `off` | `off`, `wasm`, or `ignore`. |
-| `WASI_SDK_EXCEPTION_ENCODING` | `standard` | `standard` or `legacy`. Only applies when exception opcodes are emitted. |
-| `WASI_SDK_SETJMP` | `OFF` | Enable `setjmp`/`longjmp` via the SJLJ lowering. |
-| `WASI_SDK_CXX_STDLIB` | `libc++` | Passed to `-stdlib=`; `default` leaves it to the compiler. |
-| `WASI_SDK_CROSSCOMPILING_EMULATOR` | *(none)* | Sets `CMAKE_CROSSCOMPILING_EMULATOR` so `ctest` can run the output. |
+| Variable                           | Default         | Meaning                                                                            |
+| ---------------------------------- | --------------- | ---------------------------------------------------------------------------------- |
+| `WASI_SDK_ROOT`                    | *(required)*    | Extracted wasi-sdk release.                                                        |
+| `WASI_SDK_TARGET_TRIPLE`           | `wasm32-wasip1` | Any triple the SDK's sysroot provides.                                             |
+| `WASI_SDK_EMULATED_FEATURES`       | *(none)*        | Any of `signal`, `mman`, `process-clocks`, `getpid`. Comma or semicolon separated. |
+| `WASI_SDK_EXCEPTIONS`              | `off`           | `off`, `wasm`, or `ignore`.                                                        |
+| `WASI_SDK_EXCEPTION_ENCODING`      | `standard`      | `standard` or `legacy`. Only applies when exception opcodes are emitted.           |
+| `WASI_SDK_SETJMP`                  | `OFF`           | Enable `setjmp`/`longjmp` via the SJLJ lowering.                                   |
+| `WASI_SDK_CXX_STDLIB`              | `libc++`        | Passed to `-stdlib=`; `default` leaves it to the compiler.                         |
+| `WASI_SDK_CROSSCOMPILING_EMULATOR` | *(none)*        | Sets `CMAKE_CROSSCOMPILING_EMULATOR` so `ctest` can run the output.                |
 
 ### Exceptions
 
@@ -118,11 +118,11 @@ wasi_sdk_add_extras()
 target_link_libraries(my_module PRIVATE wasi::reactor)
 ```
 
-| Target | Purpose |
-| --- | --- |
-| `wasi::reactor` | Reactor-style module: exports `_start`/`__wasm_call_ctors` and adds `-nostartfiles -Wl,--no-entry`. |
-| `wasi::abort-exceptions` | Defines `__cxa_throw`/`__cxa_allocate_exception` so they abort. For `WASI_SDK_EXCEPTIONS=ignore`. |
-| `wasi::libc-stubs` | Declarations and stub definitions for libc functionality wasi-libc lacks. |
+| Target                   | Purpose                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `wasi::reactor`          | Reactor-style module: exports `_start`/`__wasm_call_ctors` and adds `-nostartfiles -Wl,--no-entry`. |
+| `wasi::abort-exceptions` | Defines `__cxa_throw`/`__cxa_allocate_exception` so they abort. For `WASI_SDK_EXCEPTIONS=ignore`.   |
+| `wasi::libc-stubs`       | Declarations and stub definitions for libc functionality wasi-libc lacks.                           |
 
 These are libraries rather than force-included headers so their definitions
 appear once per target instead of once per translation unit, and they are not

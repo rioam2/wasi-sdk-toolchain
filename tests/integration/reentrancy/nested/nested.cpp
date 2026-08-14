@@ -1,1 +1,3 @@
-int nested_value() { return 7; }
+int nested_value() {
+  return 7;
+}

@@ -15,7 +15,11 @@ namespace {
 // returns void* rather than void.
 extern "C" {
 
-void* __cxa_allocate_exception(size_t) noexcept { abort_with_message(); }
+void* __cxa_allocate_exception(size_t) noexcept {
+  abort_with_message();
+}
 
-void __cxa_throw(void*, std::type_info*, void* (*)(void*)) { abort_with_message(); }
+void __cxa_throw(void*, std::type_info*, void* (*)(void*)) {
+  abort_with_message();
+}
 }
