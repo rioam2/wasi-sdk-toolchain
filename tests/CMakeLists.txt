@@ -68,6 +68,7 @@ foreach(name IN ITEMS
     toolchain_triple
     toolchain_emulator
     toolchain_env_fallback
+    toolchain_libc_stubs
     toolchain_idempotent
     toolchain_trycompile_vars
     toolchain_purity
@@ -93,6 +94,8 @@ add_error_test(toolchain_exception_encoding_invalid
   EXPECT "must be 'legacy' or 'standard'")
 add_error_test(toolchain_triple_invalid
   EXPECT "is not provided by this SDK" "wasm32-wasip1, wasm32-wasip2")
+add_error_test(toolchain_libc_stubs_missing
+  EXPECT "no headers were found at")
 
 # ---------------------------------------------------------------------------
 # Integration tests: real SDK, real WebAssembly output.
@@ -186,6 +189,12 @@ add_build_test(NAME extras DIR extras
 add_build_test(NAME reentrancy DIR reentrancy
   ARGS "-DWASI_SDK_EMULATED_FEATURES=getpid"
   EXPECT outer.wasm)
+
+# Unported dependencies fail to compile without these declarations, so cover the
+# toolchain-level opt-in that dependency builds rely on.
+add_build_test(NAME libc_stub_headers DIR libc_stub_headers
+  ARGS "-DWASI_SDK_LIBC_STUBS=ON" "-DWASI_SDK_EMULATED_FEATURES=mman"
+  EXPECT libunported.a)
 
 # Covers what a package manager does: unpack into a directory it owns, keeping
 # the archive for reuse.
