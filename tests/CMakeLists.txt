@@ -121,7 +121,7 @@ set(ALL_EMULATED "signal,mman,process-clocks,getpid")
 
 # add_build_test(NAME <n> DIR <d> [TOOLCHAIN <f>] [EXPECT <file>...] [ARGS <-D...>...])
 function(add_build_test)
-  cmake_parse_arguments(PARSE_ARGV 0 arg "" "NAME;DIR;TOOLCHAIN" "EXPECT;ARGS")
+  cmake_parse_arguments(PARSE_ARGV 0 arg "" "NAME;DIR;TOOLCHAIN" "EXPECT;ARGS;FORBID_OUTPUT")
 
   if(NOT DEFINED arg_TOOLCHAIN OR arg_TOOLCHAIN STREQUAL "")
     set(arg_TOOLCHAIN "${PURE_TOOLCHAIN}")
@@ -136,6 +136,7 @@ function(add_build_test)
   # '|' survives add_test's own list flattening; no argument contains one.
   string(REPLACE ";" "|" packed_args "${configure_args}")
   string(REPLACE ";" "|" packed_expect "${arg_EXPECT}")
+  string(REPLACE ";" "|" packed_forbid "${arg_FORBID_OUTPUT}")
 
   add_test(NAME "integration.${arg_NAME}"
     COMMAND "${CMAKE_COMMAND}"
@@ -143,6 +144,7 @@ function(add_build_test)
       "-DBIN=${CMAKE_CURRENT_BINARY_DIR}/builds/${arg_NAME}"
       "-DCFG_ARGS=${packed_args}"
       "-DEXPECT_FILE=${packed_expect}"
+      "-DFORBID_OUTPUT=${packed_forbid}"
       -P "${CMAKE_CURRENT_LIST_DIR}/cmake/RunBuild.cmake")
   set_tests_properties("integration.${arg_NAME}" PROPERTIES LABELS integration)
 endfunction()
@@ -168,11 +170,13 @@ add_build_test(NAME probe_parity DIR probe_parity
 
 add_build_test(NAME exceptions DIR exceptions
   ARGS "-DWASI_SDK_EXCEPTIONS=wasm"
-  EXPECT exceptions.wasm)
+  EXPECT exceptions.wasm
+  FORBID_OUTPUT "unused-command-line-argument")
 
 add_build_test(NAME setjmp DIR setjmp
   ARGS "-DWASI_SDK_SETJMP=ON"
-  EXPECT setjmp_test.wasm)
+  EXPECT setjmp_test.wasm
+  FORBID_OUTPUT "unused-command-line-argument")
 
 add_build_test(NAME extras DIR extras
   ARGS "-DWASI_SDK_EMULATED_FEATURES=${ALL_EMULATED}" "-DWASI_SDK_EXCEPTIONS=ignore"

@@ -34,9 +34,21 @@ endif()
 
 execute_process(
   COMMAND "${CMAKE_COMMAND}" --build "${BIN}" ${build_args}
-  RESULT_VARIABLE build_result)
+  RESULT_VARIABLE build_result
+  OUTPUT_VARIABLE build_stdout
+  ERROR_VARIABLE build_stderr)
+message("${build_stdout}${build_stderr}")
 if(NOT build_result EQUAL 0)
   message(FATAL_ERROR "build failed (${build_result})")
+endif()
+
+if(DEFINED FORBID_OUTPUT AND NOT FORBID_OUTPUT STREQUAL "")
+  string(REPLACE "|" ";" forbidden "${FORBID_OUTPUT}")
+  foreach(pattern IN LISTS forbidden)
+    if("${build_stdout}${build_stderr}" MATCHES "${pattern}")
+      message(FATAL_ERROR "build output matched the forbidden pattern '${pattern}'")
+    endif()
+  endforeach()
 endif()
 
 if(DEFINED EXPECT_FILE AND NOT EXPECT_FILE STREQUAL "")
