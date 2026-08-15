@@ -96,12 +96,11 @@ set(CMAKE_SYSTEM_NAME WASI)
 set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR wasm32)
 
-# CMake gained Platform/WASI*.cmake in 3.31; older versions need the copies
-# shipped alongside this file.
-if(CMAKE_VERSION VERSION_LESS 3.31)
-  list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
-  list(REMOVE_DUPLICATES CMAKE_MODULE_PATH)
-endif()
+# CMake gained Platform/WASI*.cmake in 3.31, but its copy leaves
+# CMAKE_EXECUTABLE_SUFFIX empty, so the modules shipped alongside this file take
+# precedence on every version rather than only on older ones.
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+list(REMOVE_DUPLICATES CMAKE_MODULE_PATH)
 
 # ---------------------------------------------------------------------------
 # Tools
