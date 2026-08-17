@@ -274,6 +274,12 @@ if(WASI_SDK_LIBC_STUBS)
   endforeach()
 endif()
 
+# CMAKE_C_IMPLICIT_LINK_DIRECTORIES and CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES are
+# set by the compiler probe, but the probe runs with a different flag set than
+# the real build, so the probe's result is wrong. Copy the C++ value to C so 
+# that both languages link the same way.
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES ${CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES})
+
 # _INIT variables seed the cache once, so guard against contributing twice when
 # a single configure reads this file for more than one project().
 if(NOT _WASI_SDK_FLAGS_APPLIED)
