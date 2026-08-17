@@ -5,6 +5,10 @@
 # re-reads it (every project() call, every try_compile). Everything with a side
 # effect lives in cmake/WasiSdkAcquire.cmake or cmake/WasiSdkExtras.cmake.
 #
+# The latter is included here so that projects can call wasi_sdk_add_extras()
+# without working out a path to it; that only defines the function, and the
+# helper targets appear where a project chooses to call it.
+#
 # Required input:
 #   WASI_SDK_ROOT                     Extracted wasi-sdk release. Falls back to
 #                                     the WASI_SDK_PATH environment variable.
@@ -27,6 +31,9 @@
 #   WASI_SDK_LIBC_STUBS_DIR           Where those headers live; defaults to the
 #                                     copy shipped next to this file.
 #   WASI_SDK_CROSSCOMPILING_EMULATOR  Command used to run test executables.
+#   WASI_SDK_EXTRAS_DIR               Source directory wasi_sdk_add_extras()
+#                                     builds; defaults to the copy shipped next
+#                                     to this file.
 #
 # Optimisation levels, LTO and memory layout are deliberately not set here;
 # see README.md for why those belong to the consuming project.
@@ -292,3 +299,12 @@ list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
   WASI_SDK_LIBC_STUBS_DIR
   WASI_SDK_CROSSCOMPILING_EMULATOR)
 list(REMOVE_DUPLICATES CMAKE_TRY_COMPILE_PLATFORM_VARIABLES)
+
+# ---------------------------------------------------------------------------
+# Extras
+# ---------------------------------------------------------------------------
+
+# Defines wasi_sdk_add_extras() only; it declares no targets until called. CMake
+# keeps functions for the rest of the configure, so consumers can call it from
+# any directory once project() has read this file.
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/WasiSdkExtras.cmake")

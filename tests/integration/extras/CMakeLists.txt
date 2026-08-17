@@ -5,7 +5,6 @@ if(NOT WASI_SDK_EXCEPTIONS STREQUAL "ignore")
   message(FATAL_ERROR "this project expects WASI_SDK_EXCEPTIONS=ignore")
 endif()
 
-include("${WASI_SDK_TOOLCHAIN_DIR}/cmake/WasiSdkExtras.cmake")
 wasi_sdk_add_extras()
 
 foreach(target IN ITEMS wasi::reactor wasi::abort-exceptions wasi::libc-stubs)
