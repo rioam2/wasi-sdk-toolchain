@@ -5,11 +5,11 @@ from [WebAssembly/wasi-sdk](https://github.com/WebAssembly/wasi-sdk).
 
 It is split into three pieces so a project can take only what it needs:
 
-| File                                 | Purpose                                                                    |
-| ------------------------------------ | -------------------------------------------------------------------------- |
-| `wasi-sdk.toolchain.cmake`           | Describes the toolchain. No downloads, no targets, no directory state.     |
-| `wasi-sdk-bootstrap.toolchain.cmake` | The above, plus downloading a pinned SDK first.                            |
-| `cmake/WasiSdkExtras.cmake`          | Opt-in helper targets for reactor modules, exception stubs and libc stubs. |
+| File                                 | Purpose                                                                |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| `wasi-sdk.toolchain.cmake`           | Describes the toolchain. No downloads, no targets, no directory state. |
+| `wasi-sdk-bootstrap.toolchain.cmake` | The above, plus downloading a pinned SDK first.                        |
+| `cmake/WasiSdkExtras.cmake`          | `wasi_sdk_add_extras()`, which the toolchain defines for you.          |
 
 ## Getting started
 
@@ -130,8 +130,10 @@ add_link_options($<$<CONFIG:Release>:-Wl,--gc-sections,--strip-debug>)
 
 ## Extras
 
+Either toolchain file defines `wasi_sdk_add_extras()`, so a project can declare
+the optional helper targets without locating anything:
+
 ```cmake
-include(<toolchain-dir>/cmake/WasiSdkExtras.cmake)
 wasi_sdk_add_extras()
 
 target_link_libraries(my_module PRIVATE wasi::reactor)
@@ -143,10 +145,16 @@ target_link_libraries(my_module PRIVATE wasi::reactor)
 | `wasi::abort-exceptions` | Defines `__cxa_throw`/`__cxa_allocate_exception` so they abort. For `WASI_SDK_EXCEPTIONS=ignore`.   |
 | `wasi::libc-stubs`       | Declarations and stub definitions for libc functionality wasi-libc lacks.                           |
 
-These are libraries rather than force-included headers so their definitions
-appear once per target instead of once per translation unit, and they are not
-declared by the toolchain so they can be exported and do not reappear in nested
-`project()` calls.
+The call is what declares the targets: the toolchain only defines the function,
+because targets declared by a toolchain cannot be exported and would reappear in
+every nested `project()`. Calling it more than once is harmless, and the targets
+are `EXCLUDE_FROM_ALL`, so unused ones are not built. They are libraries rather
+than force-included headers so their definitions appear once per target instead
+of once per translation unit.
+
+The sources come from `extras/` next to the toolchain file; set
+`WASI_SDK_EXTRAS_DIR`, or pass `SOURCE_DIR`/`BINARY_DIR` to the function, to
+build a different copy or place the build tree elsewhere.
 
 `wasi::libc-stubs` headers shadow real wasi-libc ones, so they reach only the
 targets that link it. Everything it declares fails at runtime; see

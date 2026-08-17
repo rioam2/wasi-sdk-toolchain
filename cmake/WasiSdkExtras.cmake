@@ -1,6 +1,5 @@
 # Adds the optional wasm32-wasi helper targets to the current project.
 #
-#   include(<toolchain-dir>/cmake/WasiSdkExtras.cmake)
 #   wasi_sdk_add_extras()
 #   target_link_libraries(my_module PRIVATE wasi::reactor)
 #
@@ -9,12 +8,10 @@
 #   wasi::abort-exceptions  __cxa_throw/__cxa_allocate_exception that abort
 #   wasi::libc-stubs        declarations for unimplemented libc functionality
 #
-# This is separate from the toolchain file on purpose: targets declared by a
-# toolchain cannot be exported and reappear in every nested project().
-
-include_guard(GLOBAL)
-
-set(_WASI_SDK_EXTRAS_DEFAULT_DIR "${CMAKE_CURRENT_LIST_DIR}/../extras")
+# The toolchain file includes this module, so wasi_sdk_add_extras() is already
+# defined in a project it configures. Only the function is defined there: the
+# targets are declared where the function is called, because targets declared by
+# a toolchain cannot be exported and reappear in every nested project().
 
 function(wasi_sdk_add_extras)
   cmake_parse_arguments(PARSE_ARGV 0 arg "" "SOURCE_DIR;BINARY_DIR" "")
@@ -30,7 +27,7 @@ function(wasi_sdk_add_extras)
     if(DEFINED WASI_SDK_EXTRAS_DIR AND NOT WASI_SDK_EXTRAS_DIR STREQUAL "")
       set(arg_SOURCE_DIR "${WASI_SDK_EXTRAS_DIR}")
     else()
-      set(arg_SOURCE_DIR "${_WASI_SDK_EXTRAS_DEFAULT_DIR}")
+      set(arg_SOURCE_DIR "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../extras")
     endif()
   endif()
   if(NOT DEFINED arg_BINARY_DIR OR arg_BINARY_DIR STREQUAL "")

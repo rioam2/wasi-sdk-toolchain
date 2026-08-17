@@ -1,6 +1,6 @@
 # Optional add-ons for wasm32-wasi builds. Added to a project through
-# wasi_sdk_add_extras() from cmake/WasiSdkExtras.cmake; nothing here is applied
-# by the toolchain itself, so a target only gets what it asks for.
+# wasi_sdk_add_extras(), which the toolchain file defines; nothing here is
+# applied by the toolchain itself, so a target only gets what it asks for.
 
 if(NOT WASI)
   message(FATAL_ERROR "wasi-sdk extras can only be built for a WASI target")

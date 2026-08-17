@@ -69,6 +69,7 @@ foreach(name IN ITEMS
     toolchain_emulator
     toolchain_env_fallback
     toolchain_libc_stubs
+    toolchain_extras
     toolchain_idempotent
     toolchain_trycompile_vars
     toolchain_purity
@@ -134,7 +135,6 @@ function(add_build_test)
   set(configure_args
     "-DCMAKE_TOOLCHAIN_FILE=${arg_TOOLCHAIN}"
     "-DWASI_SDK_ROOT=${WASI_SDK_TEST_ROOT}"
-    "-DWASI_SDK_TOOLCHAIN_DIR=${REPO_DIR}"
     ${arg_ARGS})
 
   # '|' survives add_test's own list flattening; no argument contains one.
